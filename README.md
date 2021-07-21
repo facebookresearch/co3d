@@ -61,7 +61,7 @@ python -m unittest
 
 
 ## License
-PyTorch3D is released under the [BSD License](LICENSE).
+The CO3D codebase is released under the [BSD License](LICENSE).
 
 
 ## Overview video

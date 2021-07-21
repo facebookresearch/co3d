@@ -64,7 +64,7 @@ def dataset_zoo(
     mask_depths: bool = False,
     restrict_sequence_name: typing.List[str] = [],
     test_restrict_sequence_id: int = -1,
-    assert_single_seq: bool = True,
+    assert_single_seq: bool = False,
 ) -> typing.Dict[str, torch.utils.data.Dataset]:
     """
     Generates the training / validation and testing dataset objects.
