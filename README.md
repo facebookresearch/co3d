@@ -65,4 +65,4 @@ The CO3D codebase is released under the [BSD License](LICENSE).
 
 ## Overview video
 The following presentation of the dataset was delivered at the Extreme Vision Workshop at CVPR 2021:
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/hMx9nzG50xQ/0.jpg)](https://www.youtube.com/watch?v=hMx9nzG50xQ)
+[![Overview](https://img.youtube.com/vi/hMx9nzG50xQ/0.jpg)](https://www.youtube.com/watch?v=hMx9nzG50xQ)
