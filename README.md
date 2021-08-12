@@ -35,7 +35,7 @@ This is a `Python 3` / `PyTorch` codebase.
 2) [Install `PyTorch3D`.](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md)
 3) Install the remaining dependencies in `requirements.txt`:
 ```
-pip install lpips visdom tqdm
+pip install lpips visdom tqdm requests
 ```
 Note that the core data model in `dataset/types.py` is independent of `PyTorch` and can be imported and used with other machine-learning frameworks.
 
@@ -46,6 +46,7 @@ Note that the core data model in `dataset/types.py` is independent of `PyTorch` 
 - [`tqdm`](https://pypi.org/project/tqdm/)
 - [`visdom`](https://github.com/facebookresearch/visdom)
 - [`lpips`](https://github.com/richzhang/PerceptualSimilarity)
+- [`requests`](https://docs.python-requests.org/en/master/)
 
 
 ## Getting started
