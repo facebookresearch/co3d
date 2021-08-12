@@ -30,7 +30,7 @@ where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FO
 
 
 ## Installation
-This is a `python3 / PyTorch` codebase.
+This is a `Python 3` / `PyTorch` codebase.
 1) [Install `PyTorch`.](https://pytorch.org/)
 2) [Install `PyTorch3D`.](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md)
 3) Install the remaining dependencies in `requirements.txt`:
@@ -41,7 +41,6 @@ Note that the core data model in `dataset/types.py` is independent of `PyTorch` 
 
 
 ##  Dependencies
-`requirements.txt` lists the following dependencies:
 - [`PyTorch`](https://pytorch.org/)
 - [`PyTorch3D`](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md)
 - [`tqdm`](https://pypi.org/project/tqdm/)
@@ -50,7 +49,7 @@ Note that the core data model in `dataset/types.py` is independent of `PyTorch` 
 
 
 ## Getting started
-1. Install dependencies - See [Instalation](#installation) above.
+1. Install dependencies - See [Installation](#installation) above.
 2. Download the dataset [here](https://ai.facebook.com/datasets/co3d-downloads/) to a given root folder `DATASET_ROOT_FOLDER`.
 3. In `dataset/dataset_zoo.py` set the `DATASET_ROOT` variable to your DATASET_ROOT_FOLDER`:
     ```
@@ -76,4 +75,4 @@ The CO3D codebase is released under the [BSD License](LICENSE).
 
 ## Overview video
 The following presentation of the dataset was delivered at the Extreme Vision Workshop at CVPR 2021:
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/hMx9nzG50xQ/0.jpg)](https://www.youtube.com/watch?v=hMx9nzG50xQ)
+[![Overview](https://img.youtube.com/vi/hMx9nzG50xQ/0.jpg)](https://www.youtube.com/watch?v=hMx9nzG50xQ)
