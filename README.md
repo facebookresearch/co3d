@@ -18,6 +18,16 @@ This repository contains a set of tools for working with the Common Objects in 3
 The dataset can be downloaded from the following Facebook AI Research web page:
 [download link](https://ai.facebook.com/datasets/co3d-downloads/)
 
+### Automatic batch-download
+We also provide a python script that allows downloading all dataset files at once:
+1) Open [CO3D downloads page](https://ai.facebook.com/datasets/co3d-downloads/) in your browser.
+2) Download the file with CO3D file links at the bottom of the page.
+3) Execute the download script:
+    ```
+    python ./download_dataset.py --link_list_file LINK_LIST_FILE --download_folder DOWNLOAD_FOLDER
+    ```
+where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FOLDER` is is a local target folder for downloading the dataset files.
+
 
 ## Installation
 This is a `python3 / PyTorch` codebase.
