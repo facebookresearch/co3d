@@ -12,7 +12,6 @@ import argparse
 import functools
 from typing import List, Optional
 
-from dataset.dataset_zoo import CO3D_CATEGORIES
 from multiprocessing import Pool
 from tqdm import tqdm
 
@@ -25,7 +24,7 @@ def main(
     download_categories: Optional[List[str]] = None,
 ):
     """
-    Downloads the CO3D dataset.
+    Downloads and unpacks the CO3D dataset.
     
     Args:
         link_list_file: A text file with the list of CO3D file download links.
@@ -53,29 +52,34 @@ def main(
         raise ValueError(
             "Please specify `download_folder` with a valid path to a target folder" 
             + " for downloading the CO3D dataset."
+            + f" {download_folder} does not exist."
         )
 
-
+    # read the link file
     with open(link_list_file, 'r') as f:
-        links = f.readlines()
+        links = [l.strip() for l in f.readlines()[1:]]
 
-    if (len(links) != 51) or any(not l.startswith('https://') for l in links):
+    if (len(links) != 51):
         raise ValueError(
             "Unexpected format of `link_list_file`."
             " The file has to contain 51 lines, each line must be a hyperlink."    
         )
 
+    # convert to a list of tuples [(category, link)]
+    links = {
+        (l_[0].replace('CO3D_', '').replace('.zip', ''), l_[1])
+        for l_ in [l.split('\t') for l in links]
+    }
+
     if download_categories is not None:    
-        not_in_co3d = [c for c in download_categories if c not in CO3D_CATEGORIES]
+        co3d_categories = [l[0] for l in links]
+        not_in_co3d = [c for c in download_categories if c not in co3d_categories]
         if len(not_in_co3d) > 0:
             raise ValueError(
                 f"download_categories {str(not_in_co3d)} are not valid"
                 + "CO3D categories."
             )
-        links = [
-            l for li, l in enumerate(links)
-            if CO3D_CATEGORIES[li] in download_categories
-        ]
+        links = [(c, l) for c, l in links if c in download_categories]
 
     print(f"Downloading {len(links)} CO3D dataset files ...")
     with Pool(processes=n_download_workers) as download_pool: 
@@ -108,17 +112,33 @@ def _get_local_fl_from_link(download_folder: str, link: str):
     return local_fl
 
 def _unpack_category_file(download_folder: str, link: str):
-    local_fl = _get_local_fl_from_link(download_folder, link)
-    print(f"Unpacking CO3D dataset file {local_fl} to {download_folder}.")
+    local_fl = os.path.join(download_folder, link[0] + '.zip')
+    print(f"Unpacking CO3D dataset file {local_fl} ({link[1]}) to {download_folder}.")
     shutil.unpack_archive(local_fl, download_folder)
     
 def _download_category_file(download_folder: str, link: str):
-    local_fl = _get_local_fl_from_link(download_folder, link)
-    print(f"Downloading CO3D dataset file {link} to {local_fl}.")
-    r = requests.get(link)
-    with open(local_fl, "wb") as f:
-        f.write(r.content)
+    local_fl = os.path.join(download_folder, link[0] + '.zip')
+    print(f"Downloading CO3D dataset file {link[1]} ({link[0]}) to {local_fl}.")
+    _download_with_progress_bar(link[1], local_fl, link[0])
 
+def _download_with_progress_bar(url: str, fname: str, category: str):
+    # taken from https://stackoverflow.com/a/62113293/986477
+    resp = requests.get(url, stream=True)
+    total = int(resp.headers.get('content-length', 0))
+    with open(fname, 'wb') as file, tqdm(
+        desc=fname,
+        total=total,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024,
+    ) as bar:
+        for datai, data in enumerate(resp.iter_content(chunk_size=1024)):
+            size = file.write(data)
+            bar.update(size)
+            if datai % ((total//1024)//20) == 0:
+                print(f"{category}: Downloaded {100.0*(float(bar.n)/total):3.1f}%.")
+                print(bar)
+                
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Download the CO3D dataset.')
@@ -162,3 +182,5 @@ if __name__=="__main__":
         n_extract_workers=int(args.n_extract_workers),
         download_categories=args.download_categories,
     )
+
+

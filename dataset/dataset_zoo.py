@@ -34,22 +34,6 @@ DATASET_CONFIGS = {
 
 DATASET_ROOT = "specify_DATASET_ROOT_FOLDER_here"
 
-# fmt: off
-CO3D_CATEGORIES = list(reversed([
-    "baseballbat", "banana",  "bicycle", "microwave", "tv", 
-    "cellphone", "toilet", "hairdryer", "couch", "kite", "pizza", 
-    "umbrella", "wineglass", "laptop",
-    "hotdog", "stopsign", "frisbee", "baseballglove", 
-    "cup", "parkingmeter", "backpack", "toyplane", "toybus", 
-    "handbag", "chair", "keyboard", "car", "motorcycle", 
-    "carrot", "bottle", "sandwich", "remote", "bowl", "skateboard",
-    "toaster", "mouse", "toytrain", "book",  "toytruck",
-    "orange", "broccoli", "plant", "teddybear", 
-    "suitcase", "bench", "ball", "cake", 
-    "vase", "hydrant", "apple", "donut", 
-]))
-# fmt: on
-
 
 def dataset_zoo(
     dataset_name: str = "co3d_singlesequence",
