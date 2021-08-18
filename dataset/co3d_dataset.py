@@ -762,7 +762,7 @@ def _get_1d_bounds(arr):
 
 def _get_bbox_from_mask(mask, thr, decrease_quant=0.05):
     # bbox in xywh
-    masks_for_box = mask
+    masks_for_box = np.zeros_like(mask)
     while masks_for_box.sum() <= 1.0:
         masks_for_box = (mask > thr).astype(np.float32)
         thr -= decrease_quant
