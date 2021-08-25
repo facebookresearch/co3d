@@ -10,7 +10,7 @@ CO3D: Common Objects In 3D
 This repository contains a set of tools for working with the Common Objects in 3D <i>(CO3D)</i> dataset.
 
 <center>
-<img src="./grid.gif" width="600" />
+<img src="./grid.gif" width="800" />
 </center>
 
 
