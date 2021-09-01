@@ -26,7 +26,7 @@ We also provide a python script that allows downloading all dataset files at onc
     ```
     python ./download_dataset.py --link_list_file LINK_LIST_FILE --download_folder DOWNLOAD_FOLDER
     ```
-where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FOLDER` is is a local target folder for downloading the dataset files.
+where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
 
 
 ## Installation
