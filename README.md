@@ -7,7 +7,8 @@
 CO3D: Common Objects In 3D
 ==========================
 
-This repository contains a set of tools for working with the Common Objects in 3D <i>(CO3D)</i> dataset.
+This repository contains a set of tools for working with the Common Objects in 3D <i>(CO3D)</i> dataset. 
+The dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction](https://arxiv.org/abs/2109.00512)
 
 <center>
 <img src="./grid.gif" width="600" />
@@ -17,6 +18,7 @@ This repository contains a set of tools for working with the Common Objects in 3
 ## [Download the dataset](https://ai.facebook.com/datasets/CO3D-dataset)
 The dataset can be downloaded from the following Facebook AI Research web page:
 [download link](https://ai.facebook.com/datasets/co3d-downloads/)
+
 
 ### Automatic batch-download
 We also provide a python script that allows downloading all dataset files at once:
@@ -67,6 +69,18 @@ Note that the core data model in `dataset/types.py` is independent of `PyTorch` 
 Unit tests can be executed with:
 ```
 python -m unittest
+```
+
+
+## Reference
+If you use our dataset, please use the following citation:
+```
+@inproceedings{reizenstein21co3d,
+	Author = {Reizenstein, Jeremy and Shapovalov, Roman and Henzler, Philipp and Sbordone, Luca and Labatut, Patrick and Novotny, David},
+	Booktitle = {International Conference on Computer Vision},
+	Title = {Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction},
+	Year = {2021},
+}
 ```
 
 
