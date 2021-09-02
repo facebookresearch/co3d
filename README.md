@@ -11,7 +11,7 @@ This repository contains a set of tools for working with the Common Objects in 3
 The dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction](https://arxiv.org/abs/2109.00512)
 
 <center>
-<img src="./grid.gif" width="600" />
+<img src="./grid.gif" width="800" />
 </center>
 
 
@@ -28,7 +28,7 @@ We also provide a python script that allows downloading all dataset files at onc
     ```
     python ./download_dataset.py --link_list_file LINK_LIST_FILE --download_folder DOWNLOAD_FOLDER
     ```
-where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FOLDER` is is a local target folder for downloading the dataset files.
+where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
 
 
 ## Installation
