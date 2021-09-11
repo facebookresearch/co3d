@@ -135,7 +135,7 @@ def _download_with_progress_bar(url: str, fname: str, category: str):
         for datai, data in enumerate(resp.iter_content(chunk_size=1024)):
             size = file.write(data)
             bar.update(size)
-            if datai % ((total//1024)//20) == 0:
+            if datai % max(((total//1024)//20),1) == 0:
                 print(f"{category}: Downloaded {100.0*(float(bar.n)/total):3.1f}%.")
                 print(bar)
                 
