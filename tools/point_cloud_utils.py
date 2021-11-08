@@ -89,7 +89,7 @@ def render_point_cloud_pytorch3d(
     rasterizer = PointsRasterizer(
         cameras=camera_trivial,
         raster_settings=PointsRasterizationSettings(
-            image_size=int(max(render_size)),
+            image_size=render_size,
             radius=point_radius,
             points_per_pixel=topk,
             bin_size=64 if int(max(render_size)) > 1024 else None,
@@ -129,22 +129,7 @@ def render_point_cloud_pytorch3d(
     # add the rendering mask
     render_mask = 1.0 - torch.prod(1.0 - weights, dim=-1)
 
-    # cat depths and render mask
-    rendered_blob = torch.cat((images, depths[:, None], render_mask[:, None]), dim=1)
-
-    # reshape back
-    rendered_blob = Fu.interpolate(
-        rendered_blob,
-        size=render_size,
-        mode="bilinear",
-    )
-
-    data_rendered, depth_rendered, render_mask = rendered_blob.split(
-        [rendered_blob.shape[1] - 2, 1, 1],
-        dim=1,
-    )
-
-    return data_rendered, render_mask, depth_rendered
+    return images, render_mask[:, None], depths[:, None]
 
 
 def _signed_clamp(x, eps):

@@ -188,3 +188,27 @@ def volumetric_camera_overlaps(
     iou = inter / (mass[:, None] + mass[None, :] - inter).clamp(0.1)
 
     return iou
+
+
+def pytorch3d_has_old_ndc_convention() -> bool:
+    test_ray_bundle = pt3d.renderer.NDCGridRaysampler(
+        image_width=4,
+        image_height=2,
+        n_pts_per_ray=1,
+        min_depth=1.0,
+        max_depth=1.0,
+    )(pt3d.renderer.PerspectiveCameras(focal_length=[1.0]))
+    xy_range_above_1 = (test_ray_bundle.xys.abs() > 1.001).any()
+    if xy_range_above_1:
+        # the new ndc convention has to contain xys > 1
+        return False
+    else:
+        return True
+
+
+def assert_pytorch3d_has_new_ndc_convention():
+    if pytorch3d_has_old_ndc_convention():
+        raise EnvironmentError(
+            "This codebase uses the new Pytorch3D NDC convention."
+            " Please update Pytorch3D to the very latest version."
+        )

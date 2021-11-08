@@ -6,6 +6,7 @@
 
 from collections import defaultdict
 from dataclasses import dataclass, field, fields
+from distutils.version import StrictVersion
 import functools
 import gzip
 import hashlib
@@ -21,8 +22,10 @@ from PIL import Image
 from plyfile import PlyData  # TODO: get rid of it after pt3d supports loading normals
 import torch
 
+import pytorch3d
 from pytorch3d.renderer.cameras import CamerasBase, PerspectiveCameras
 from pytorch3d.structures.pointclouds import Pointclouds
+from tools.camera_utils import assert_pytorch3d_has_new_ndc_convention
 
 from . import types
 
@@ -283,6 +286,7 @@ class Co3dDataset(torch.utils.data.Dataset):
     eval_batches: Optional[List[List[int]]] = None
 
     def __post_init__(self):
+        assert_pytorch3d_has_new_ndc_convention()
         self.subset_to_image_path = None
         self._load_frames()
         self._load_sequences()
@@ -488,34 +492,40 @@ class Co3dDataset(torch.utils.data.Dataset):
         principal_point = torch.tensor(
             entry.viewpoint.principal_point, dtype=torch.float
         )
-        focal_length = torch.tensor(entry.viewpoint.focal_length, dtype=torch.float)
-
-        # the original image size
-        half_image_size_wh_orig = (
-            torch.tensor(list(reversed(entry.image.size)), dtype=torch.float) / 2.0
+        focal_length = torch.tensor(
+            entry.viewpoint.focal_length, dtype=torch.float
         )
 
-        # image size output by the dataloader
-        if self.image_height is None and self.image_width is None:
-            half_image_size_wh_output = (
-                torch.tensor(list(reversed(entry.image.size)), dtype=torch.float) / 2.0
-            )
-        else:
-            half_image_size_wh_output = (
-                torch.tensor([self.image_width, self.image_height], dtype=torch.float)
-                / 2.0
-            )
+        # first, we convert from the legacy Pytorch3D NDC convention
+        # (currently used in CO3D for storing intrinsics) to pixels
+        half_image_size_wh_orig = (
+            torch.tensor(list(reversed(entry.image.size)), dtype=torch.float)
+            / 2.0
+        )
 
         # principal point and focal length in pixels
-        principal_point_px = -1.0 * (principal_point - 1.0) * half_image_size_wh_orig
+        principal_point_px = (
+            -1.0 * (principal_point - 1.0) * half_image_size_wh_orig
+        )
         focal_length_px = focal_length * half_image_size_wh_orig
         if self.box_crop:
             assert clamp_bbox_xyxy is not None
             principal_point_px -= clamp_bbox_xyxy[:2]
 
+        # now, convert from pixels to Pytorch3D v0.5+ NDC convention
+        if self.image_height is None or self.image_width is None:
+            out_size = list(reversed(entry.image.size))
+        else:
+            out_size = [self.image_width, self.image_height]
+
+        half_image_size_output = torch.tensor(out_size, dtype=torch.float) / 2.0
+        half_min_image_size_output = half_image_size_output.min()
+
         # rescaled principal point and focal length in ndc
-        principal_point = 1 - principal_point_px * scale / half_image_size_wh_output
-        focal_length = focal_length_px * scale / half_image_size_wh_output
+        principal_point = (
+            half_image_size_output - principal_point_px * scale
+        ) / half_min_image_size_output
+        focal_length = focal_length_px * scale / half_min_image_size_output
 
         return PerspectiveCameras(
             focal_length=focal_length[None],
@@ -523,6 +533,7 @@ class Co3dDataset(torch.utils.data.Dataset):
             R=torch.tensor(entry.viewpoint.R, dtype=torch.float)[None],
             T=torch.tensor(entry.viewpoint.T, dtype=torch.float)[None],
         )
+
 
     def _load_frames(self):
         print(f"Loading Co3D frames from {self.frame_annotations_file}.")

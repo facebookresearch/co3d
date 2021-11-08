@@ -11,7 +11,7 @@ from pytorch3d.vis import plotly_vis
 
 from typing import Optional, Tuple
 from visdom import Visdom
-from .co3d_dataset import Co3dDataset, FrameData
+from dataset.co3d_dataset import Co3dDataset, FrameData
 
 from pytorch3d.structures import Pointclouds
 from tools.point_cloud_utils import get_rgbd_point_cloud
