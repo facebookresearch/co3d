@@ -225,6 +225,7 @@ class TestEvaluation(unittest.TestCase):
                 nvs_prediction,
                 bg_color=self.bg_color,
                 lpips_model=self.lpips_model,
+                visualize=False,
             )
 
             # Make a terribly bad NVS prediction and check that this is worse
@@ -244,6 +245,7 @@ class TestEvaluation(unittest.TestCase):
                 nvs_prediction_bad,
                 bg_color=self.bg_color,
                 lpips_model=self.lpips_model,
+                visualize=False,
             )
 
             lower_better = {

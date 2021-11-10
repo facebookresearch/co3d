@@ -15,6 +15,7 @@ import numpy as np
 from pytorch3d.renderer.cameras import CamerasBase
 from tabulate import tabulate
 import torch
+import pdb
 
 from dataset.co3d_dataset import FrameData
 from dataset.utils import is_known_frame, is_train_frame
@@ -239,17 +240,13 @@ def eval_batch(
                     viewpoint_trivial,
                     image_render,
                     nvs_prediction.depth_render,
-                    # mask_crop,
                     torch.ones_like(nvs_prediction.depth_render),
-                    # loss_mask_now,
                 )
                 pcl_gt = get_rgbd_point_cloud(
                     viewpoint_trivial,
                     image_rgb_masked,
                     frame_data.depth_map,
-                    # mask_crop,
                     torch.ones_like(frame_data.depth_map),
-                    # loss_mask_now,
                 )
                 _pcls = {
                     pn: p
@@ -267,8 +264,6 @@ def eval_batch(
                     env="eval_debug",
                     win=f"pcl{name_postfix}",
                 )
-                import pdb
-
                 pdb.set_trace()
 
     if lpips_model is not None:

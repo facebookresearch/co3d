@@ -93,8 +93,7 @@ def get_co3d_sequence_pointcloud(
             frame_data.camera,
             frame_data.image_rgb,
             frame_data.depth_map,
-            (frame_data.fg_probability > 0.5).float(),
-            mask_points=mask_points,
+            (frame_data.fg_probability > 0.5).float() if mask_points else None,
         )
 
     return point_cloud, frame_data

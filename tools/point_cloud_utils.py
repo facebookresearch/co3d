@@ -28,7 +28,6 @@ def get_rgbd_point_cloud(
     depth_map: torch.Tensor,
     mask: Optional[torch.Tensor] = None,
     mask_thr: float = 0.5,
-    mask_points: bool = True,
 ) -> Pointclouds:
     """
     Given a batch of images, depths, masks and cameras, generate a colored

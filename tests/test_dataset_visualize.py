@@ -117,13 +117,6 @@ class TestDatasetVisualize(unittest.TestCase):
             [sequence_frame_data.image_rgb, images_render], dim=3
         )
 
-        # imfile = os.path.join(
-        #     os.path.split(os.path.abspath(__file__))[0],
-        #     f'test_dataset_visualize'
-        #     + f'_max_frames={max_frames}'
-        #     + f'_load_pcl={load_dataset_point_cloud}'
-        #     + f'_dataset_key={dataset_key}_non_isotropic_f.png',
-        # )
         imfile = os.path.join(
             os.path.split(os.path.abspath(__file__))[0],
             f'test_dataset_visualize'
