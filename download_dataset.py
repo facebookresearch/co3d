@@ -12,8 +12,12 @@ import argparse
 import functools
 from typing import List, Optional
 
+from check_checksum import check_co3d_sha256
 from multiprocessing import Pool
 from tqdm import tqdm
+
+
+DEFAULT_LINK_LIST_FILE = os.path.join(os.path.dirname(__file__), "co3d_links.txt")
 
 
 def main(
@@ -21,7 +25,8 @@ def main(
     download_folder: str,
     n_download_workers: int=4, 
     n_extract_workers: int=4,
-    download_categories: Optional[List[str]] = None,
+    download_categories: Optional[List[str]]=None,
+    checksum_check: bool=False,
 ):
     """
     Downloads and unpacks the CO3D dataset.
@@ -38,6 +43,8 @@ def main(
             for extracting the dataset files.
         download_categories: A list of categories to download. 
             If `None`, downloads all.
+        checksum_check: Enable validation of the downloaded file's checksum before
+            extraction.
     """
 
     if not os.path.isfile(link_list_file):
@@ -96,8 +103,10 @@ def main(
     with Pool(processes=n_extract_workers) as extract_pool: 
         for _ in tqdm(
             extract_pool.imap(
-                functools.partial(_unpack_category_file, download_folder),
-                links
+                functools.partial(
+                    _unpack_category_file, download_folder, checksum_check
+                ),
+                links,
             ),
             total=len(links),
         ):
@@ -105,14 +114,11 @@ def main(
         
     print("Done")
 
-
-def _get_local_fl_from_link(download_folder: str, link: str):
-    file_name = os.path.split(link)[-1]
-    local_fl = os.path.join(download_folder, file_name)
-    return local_fl
-
-def _unpack_category_file(download_folder: str, link: str):
+def _unpack_category_file(download_folder: str, checksum_check: bool, link: str):
     local_fl = os.path.join(download_folder, link[0] + '.zip')
+    if checksum_check:
+        print(f"Checking SHA256 for {local_fl}.")    
+        check_co3d_sha256(local_fl)
     print(f"Unpacking CO3D dataset file {local_fl} ({link[1]}) to {download_folder}.")
     shutil.unpack_archive(local_fl, download_folder)
     
@@ -124,6 +130,7 @@ def _download_category_file(download_folder: str, link: str):
 def _download_with_progress_bar(url: str, fname: str, category: str):
     # taken from https://stackoverflow.com/a/62113293/986477
     resp = requests.get(url, stream=True)
+    print(url)
     total = int(resp.headers.get('content-length', 0))
     with open(fname, 'wb') as file, tqdm(
         desc=fname,
@@ -142,14 +149,6 @@ def _download_with_progress_bar(url: str, fname: str, category: str):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Download the CO3D dataset.')
-    parser.add_argument(
-        '--link_list_file', 
-        type=str,
-        help=(
-            "The file with html links to the CO3D dataset files."
-            + "The file can be obtained at https://ai.facebook.com/datasets/co3d-downloads/ ."
-        )
-    )
     parser.add_argument(
         '--download_folder', 
         type=str,
@@ -174,6 +173,21 @@ if __name__=="__main__":
         help="A comma-separated list of CO3D categories to download."
         + " Example: 'orange,car' will download only oranges and cars",
     )
+    parser.add_argument(
+        '--link_list_file', 
+        type=str,
+        default=DEFAULT_LINK_LIST_FILE,
+        help=(
+            "The file with html links to the CO3D dataset files."
+            + " In most cases the default local file `co3d_links.txt` should be used."
+        )
+    )
+    parser.add_argument(
+        '--checksum_check', 
+        action='store_true',
+        default=False,
+        help="Check the SHA256 checksum of each downloaded file before extraction.",
+    )
     args = parser.parse_args()
     main(
         str(args.link_list_file),
@@ -181,6 +195,7 @@ if __name__=="__main__":
         n_download_workers=int(args.n_download_workers),
         n_extract_workers=int(args.n_extract_workers),
         download_categories=args.download_categories,
+        checksum_check=bool(args.checksum_check),
     )
 
 
