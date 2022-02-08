@@ -33,8 +33,6 @@ def main(
     
     Args:
         link_list_file: A text file with the list of CO3D file download links.
-            Please visit https://ai.facebook.com/datasets/co3d-downloads/ 
-            in order to obtain the file.
         download_folder: A local target folder for downloading the
             the dataset files.
         n_download_workers: The number of parallel workers 

@@ -15,20 +15,18 @@ The dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Lar
 </center>
 
 
-## [Download the dataset](https://ai.facebook.com/datasets/CO3D-dataset)
-The dataset can be downloaded from the following Facebook AI Research web page:
-[download link](https://ai.facebook.com/datasets/co3d-downloads/)
+## Download the dataset
+The links to all dataset files are present in this repository in `co3d_links.txt`.
 
 
 ### Automatic batch-download
-We also provide a python script that allows downloading all dataset files at once:
-1) Open [CO3D downloads page](https://ai.facebook.com/datasets/co3d-downloads/) in your browser.
-2) Download the file with CO3D file links at the bottom of the page.
-3) Execute the download script:
+We also provide a python script that allows downloading all dataset files at once.
+In order to do so, execute the download script:
     ```
-    python ./download_dataset.py --link_list_file LINK_LIST_FILE --download_folder DOWNLOAD_FOLDER
+    python ./download_dataset.py --download_folder DOWNLOAD_FOLDER
     ```
-where `LINK_LIST_FILE` is the file downloaded at step 2) above, and `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
+where `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
+Make sure to create this folder before commencing the download.
 
 
 ## Installation
