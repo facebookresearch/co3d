@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import json
 import typing
 import gzip
-from typing import Optional, Tuple, IO, Any, Union
+from typing import Optional, Tuple, IO, Any, Union, get_type_hints
 
 TF3 = Tuple[float, float, float]
 
@@ -31,7 +31,6 @@ class DepthAnnotation:
     scale_adjustment: float
     # path to png file, relative w.r.t. dataset_root, storing binary `depth` mask
     mask_path: Optional[str]
-
 
 @dataclass
 class MaskAnnotation:
@@ -146,7 +145,7 @@ def _dataclass_from_dict(d, typeannot):
     if d is None:
         return d
     elif issubclass(cls, tuple) and hasattr(cls, "_fields"):  # namedtuple
-        types = cls._field_types.values()
+        types = get_type_hints(cls).values()
         return cls(*[_dataclass_from_dict(v, tp) for v, tp in zip(d, types)])
     elif issubclass(cls, (list, tuple)):
         types = typing.get_args(typeannot)
