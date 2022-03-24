@@ -69,6 +69,10 @@ Unit tests can be executed with:
 python -m unittest
 ```
 
+## Reproducing results
+[Implicitron](https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer) is our open-source framework used to train all implicit shape learning methods from the CO3D paper. Please visit the following link for more details:
+https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer
+
 
 ## Reference
 If you use our dataset, please use the following citation:
