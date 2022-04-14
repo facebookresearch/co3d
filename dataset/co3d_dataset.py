@@ -514,7 +514,13 @@ class Co3dDataset(torch.utils.data.Dataset):
 
         # now, convert from pixels to Pytorch3D v0.5+ NDC convention
         if self.image_height is None or self.image_width is None:
-            out_size = list(reversed(entry.image.size))
+            if self.box_crop:
+                out_size = [
+                    clamp_bbox_xyxy[2] - clamp_bbox_xyxy[0],
+                    clamp_bbox_xyxy[3] - clamp_bbox_xyxy[1],
+                ]
+            else:
+                out_size = list(reversed(entry.image.size))            
         else:
             out_size = [self.image_width, self.image_height]
 
