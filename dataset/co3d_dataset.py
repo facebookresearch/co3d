@@ -411,6 +411,9 @@ class Co3dDataset(torch.utils.data.Dataset):
         return frame_data
 
     def _load_crop_fg_probability(self, entry):
+        fg_probability = None
+        full_path = None
+        bbox_xywh = None
         clamp_bbox_xyxy = None
         if (self.load_masks or self.box_crop) and entry.mask is not None:
             full_path = os.path.join(self.dataset_root, entry.mask.path)
