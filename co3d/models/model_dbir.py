@@ -4,6 +4,8 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+raise NotImplementedError("Use the model from Implicitron!")
+
 
 from typing import List
 import torch

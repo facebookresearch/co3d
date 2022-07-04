@@ -17,7 +17,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 
-DEFAULT_LINK_LIST_FILE = os.path.join(os.path.dirname(__file__), "co3d_links.txt")
+DEFAULT_LINK_LIST_FILE = os.path.join(os.path.dirname(__file__), "co3d_v2_links.txt")
 
 
 def main(

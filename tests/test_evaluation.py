@@ -4,6 +4,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+raise NotImplementedError("Finish this!")
 
 import os
 import dataclasses
@@ -15,10 +16,10 @@ import copy
 import numpy as np
 import lpips
 
-from dataset.co3d_dataset import Co3dDataset, FrameData
-from dataset.dataset_zoo import DATASET_ROOT
-from tools.utils import dataclass_to_cuda_
-from evaluation.evaluate_new_view_synthesis import eval_batch
+
+from pytorch3d.dataset.dataset_zoo import DATASET_ROOT
+from pytorch3d.implicitron.tools.utils import dataclass_to_cuda_
+from pytorch3d.implicitron.evaluation.evaluate_new_view_synthesis import eval_batch
 from tools.metric_utils import calc_psnr, eval_depth
 from models.model_dbir import ModelDBIR
 
@@ -32,7 +33,7 @@ class TestEvaluation(unittest.TestCase):
         frame_file = os.path.join(dataset_root, category, "frame_annotations.jgz")
         sequence_file = os.path.join(dataset_root, category, "sequence_annotations.jgz")
         self.image_size = 256
-        self.dataset = Co3dDataset(
+        self.dataset = JsonIndexDataset(
             frame_annotations_file=frame_file,
             sequence_annotations_file=sequence_file,
             dataset_root=dataset_root,

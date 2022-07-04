@@ -12,11 +12,13 @@ import torchvision
 
 from visdom import Visdom
 
-from dataset.co3d_dataset import Co3dDataset
-from dataset.visualize import get_co3d_sequence_pointcloud
-from dataset.dataset_zoo import DATASET_ROOT
-from tools.camera_utils import select_cameras
-from tools.point_cloud_utils import render_point_cloud_pytorch3d
+# from dataset.co3d_dataset import Co3dDataset
+
+DATASET_ROOT = ""
+
+from pytorch3d.implicitron.dataset.visualize import get_implicitron_sequence_pointcloud
+from pytorch3d.implicitron.tools.point_cloud_utils import render_point_cloud_pytorch3d
+from pytorch3d.implicitron.dataset.json_index_dataset import JsonIndexDataset
 from pytorch3d.vis.plotly_vis import plot_scene
 
 
@@ -29,7 +31,7 @@ class TestDatasetVisualize(unittest.TestCase):
         sequence_file = os.path.join(dataset_root, category, 'sequence_annotations.jgz')
         self.image_size = 256
         self.datasets = {
-            'simple': Co3dDataset(
+            'simple': JsonIndexDataset(
                 frame_annotations_file=frame_file,
                 sequence_annotations_file=sequence_file,
                 dataset_root=dataset_root,
@@ -38,7 +40,7 @@ class TestDatasetVisualize(unittest.TestCase):
                 box_crop=True,
                 load_point_clouds=True,
             ),
-            'nonsquare': Co3dDataset(
+            'nonsquare': JsonIndexDataset(
                 frame_annotations_file=frame_file,
                 sequence_annotations_file=sequence_file,
                 dataset_root=dataset_root,
@@ -47,7 +49,7 @@ class TestDatasetVisualize(unittest.TestCase):
                 box_crop=True,
                 load_point_clouds=True,
             ),
-            'nocrop': Co3dDataset(
+            'nocrop': JsonIndexDataset(
                 frame_annotations_file=frame_file,
                 sequence_annotations_file=sequence_file,
                 dataset_root=dataset_root,
@@ -92,7 +94,7 @@ class TestDatasetVisualize(unittest.TestCase):
         sequence_show = list(dataset.seq_annots.keys())[0]
         device = torch.device('cuda:0')
 
-        point_cloud, sequence_frame_data = get_co3d_sequence_pointcloud(
+        point_cloud, sequence_frame_data = get_implicitron_sequence_pointcloud(
             dataset,
             sequence_name=sequence_show,
             mask_points=True,
@@ -109,7 +111,7 @@ class TestDatasetVisualize(unittest.TestCase):
         images_render = torch.cat([
             self._render_one_pointcloud(
                 point_cloud,
-                select_cameras(cameras, frame_i),
+                cameras[frame_i],
                 (dataset.image_height, dataset.image_width,),
             ) for frame_i in range(len(cameras))
         ]).cpu()
