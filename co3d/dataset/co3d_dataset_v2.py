@@ -5,13 +5,14 @@
 # LICENSE file in the root directory of this source tree.
 
 
-#TODO: Move this to Implicitron!!!!!
+# TODO: Move this to Implicitron!!!!!
 
 
 import copy
 import json
 import os
 import glob
+import logging
 from dataclasses import field
 from typing import Any, Dict, List, Sequence, Tuple, Union
 from omegaconf import DictConfig
@@ -24,20 +25,14 @@ from pytorch3d.implicitron.dataset.dataset_map_provider import (
 )
 from pytorch3d.implicitron.dataset.json_index_dataset import JsonIndexDataset
 from pytorch3d.implicitron.tools.config import (
-    registry, run_auto_creation, registry, get_default_args_field
+    registry,
+    run_auto_creation,
+    registry,
+    get_default_args_field,
 )
 
 
-CO3D_V2_CATEGORIES = [
-    "apple","backpack","ball","banana","baseballbat","baseballglove",
-    "bench","bicycle","book","bottle","bowl","broccoli","cake","car",
-    "carrot","cellphone","chair","couch","cup","donut","frisbee","hairdryer",
-    "handbag","hotdog","hydrant","keyboard","kite","laptop",# "microwave",
-    "motorcycle","mouse","orange","parkingmeter","pizza","plant","remote",
-    "sandwich","skateboard","stopsign","suitcase","teddybear","toaster",
-    "toilet","toybus","toyplane","toytrain","toytruck","tv",
-    "umbrella","vase","wineglass",
-]
+logger = logging.getLogger(__name__)
 
 
 @registry.register
@@ -48,11 +43,7 @@ class CO3DV2DatasetMapProvider(DatasetMapProviderBase):  # pyre-ignore [13]
 
     Args:
         category: The object category of the dataset.
-        subset: The dataset subset. One of:
-            "multisequence"
-            "singlesequence_<sequence_id>"
-            "challenge_multisequence"
-            "challenge_singlesequence"
+        subset: The dataset subset.
         dataset_root: The root folder of the dataset.
         limit_to: Limit the dataset to the first #limit_to frames.
         limit_sequences_to: Limit the dataset to the first
@@ -89,10 +80,87 @@ class CO3DV2DatasetMapProvider(DatasetMapProviderBase):  # pyre-ignore [13]
     path_manager_factory: PathManagerFactory
     path_manager_factory_class_type: str = "PathManagerFactory"
 
-
     def __post_init__(self):
         super().__init__()
         run_auto_creation(self)
+
+
+    def get_dataset_map(self) -> DatasetMap:
+        if self.only_test_set and self.test_on_train:
+            raise ValueError("Cannot have only_test_set and test_on_train")
+
+        # TODO:
+        # - implement loading multiple categories
+        frame_file = os.path.join(
+            self.dataset_root, self.category, "frame_annotations.jgz"
+        )
+        sequence_file = os.path.join(
+            self.dataset_root, self.category, "sequence_annotations.jgz"
+        )
+
+        dataset_args = copy.deepcopy(self.dataset_args)
+        dataset_args.update(
+            dict(
+                dataset_root=self.dataset_root,
+                frame_annotations_file=frame_file,
+                sequence_annotations_file=sequence_file,
+                subset_lists_file="",
+            )
+        )
+
+        dataset = JsonIndexDataset(**dataset_args)
+
+        available_subset_names = self._get_available_subset_names()
+        logger.debug(f"Available subset names: {str(available_subset_names)}.")
+        if self.subset_name not in available_subset_names:
+            raise ValueError(
+                f"Unknown subset name {self.subset_name}."
+                + f" Choose one of available subsets: {str(available_subset_names)}."
+            )
+
+       # load the list of train/val/test frames
+        subset_mapping = self._load_annotation_json(
+            os.path.join("set_lists", f"set_lists_{self.subset_name}.json")
+        )
+
+        # load the evaluation batches
+        if self.load_eval_batches:
+            eval_batch_index = self._load_annotation_json(
+                os.path.join("eval_batches", f"eval_batches_{self.subset_name}.json")
+            )
+
+        train_dataset = None
+        if not self.only_test_set:
+            logger.debug("Loading train dataset.")
+            train_dataset = json_index_dataset_from_frame_index(dataset, subset_mapping["train"])
+            logger.info(f"Train dataset: {str(train_dataset)}")
+
+        if self.test_on_train:
+            assert train_dataset is not None
+            val_dataset = test_dataset = train_dataset
+        else:
+            logger.debug("Loading val dataset.")
+            val_dataset = json_index_dataset_from_frame_index(
+                dataset, subset_mapping["val"]
+            )
+            logger.info(f"Val dataset: {str(val_dataset)}")
+            logger.debug("Loading test dataset.")
+            test_dataset = json_index_dataset_from_frame_index(
+                dataset, subset_mapping["test"]
+            )
+            logger.info(f"Test dataset: {str(test_dataset)}")
+            if self.load_eval_batches:
+                logger.debug("Loading eval batches.")
+                test_dataset.eval_batches = test_dataset.seq_frame_index_to_dataset_index(
+                    eval_batch_index
+                )
+                logger.info(f"# eval batches: {len(test_dataset.eval_batches)}")
+        
+        return DatasetMap(train=train_dataset, val=val_dataset, test=test_dataset)
+
+
+    def get_task(self) -> Task:
+        return Task(self.task_str)
 
 
     def _load_annotation_json(self, json_filename: str):
@@ -116,92 +184,56 @@ class CO3DV2DatasetMapProvider(DatasetMapProviderBase):  # pyre-ignore [13]
         return data
 
 
-    def get_dataset_map(self) -> DatasetMap:
-        if self.only_test_set and self.test_on_train:
-            raise ValueError("Cannot have only_test_set and test_on_train")
-
-        # TODO:
-        # - implement loading multiple categories
-
-        frame_file = os.path.join(
-            self.dataset_root, self.category, "frame_annotations.jgz"
-        )
-        sequence_file = os.path.join(
-            self.dataset_root, self.category, "sequence_annotations.jgz"
-        )
-
-        dataset_args = copy.deepcopy(self.dataset_args)
-        dataset_args.update(dict(
-            dataset_root=self.dataset_root,
-            frame_annotations_file=frame_file,
-            sequence_annotations_file=sequence_file,
-            subset_lists_file="",
-        ))
-
-        dataset = JsonIndexDataset(**dataset_args)
-
-        # load the list of train/val/test frames
-        subset_mapping = self._load_annotation_json(
-            os.path.join("set_lists", f"set_lists_{self.subset_name}.json")
-        )
-
-        # load the evaluation batches
-        if self.load_eval_batches:
-            eval_batch_index = self._load_annotation_json(
-                os.path.join("eval_batches", f"eval_batches_{self.subset_name}.json")
-            )
-
-        train_dataset = None
-        if not self.only_test_set:
-            train_dataset = json_index_dataset_from_frame_index(dataset, subset_mapping["train"])
-
-        if self.test_on_train:
-            assert train_dataset is not None
-            val_dataset = test_dataset = train_dataset
+    def _get_available_subset_names(self):
+        path_manager = self.path_manager_factory.get()
+        if path_manager is not None:
+            dataset_root = self.path_manager.get_local_path(self.dataset_root)
         else:
-            val_dataset = json_index_dataset_from_frame_index(
-                dataset, subset_mapping["val"]
-            )
-            test_dataset = json_index_dataset_from_frame_index(
-                dataset, subset_mapping["test"]
-            )
-            if self.load_eval_batches:
-                test_dataset.eval_batches = test_dataset.seq_frame_index_to_dataset_index(
-                    eval_batch_index
-                )
+            dataset_root = self.dataset_root
+        return get_available_subset_names(dataset_root, self.category)
         
-        datasets = DatasetMap(train=train_dataset, val=val_dataset, test=test_dataset)
-
-        return datasets
-
-    def get_task(self) -> Task:
-        return Task(self.task_str)
-
 
 def json_index_dataset_from_frame_index(
     dataset: JsonIndexDataset,
     frame_index: List[List[Union[Tuple[str, str], Tuple[str, str, str]]]],
 ):
-    dataset_new = copy.deepcopy(dataset)
-    dataset_indices = dataset_new.seq_frame_index_to_dataset_index([frame_index])[0]
-    dataset_new.frame_annots = [dataset_new.frame_annots[i] for i in dataset_indices]
+    # Get the indices into the frame annots.
+    dataset_indices = dataset.seq_frame_index_to_dataset_index([frame_index])[0]
+
+    # Deep copy the whole dataset except frame_annots, which are large so we
+    # deep copy only the requested subset of frame_annots.
+    memo = {id(dataset.frame_annots): None}  # ignores frame_annots during deepcopy
+    dataset_new = copy.deepcopy(dataset, memo)
+    dataset_new.frame_annots = copy.deepcopy(
+        [dataset.frame_annots[i] for i in dataset_indices]
+    )
+    
+    # This will kill all unneeded sequence annotations.
     dataset_new._invalidate_indexes(filter_seq_annots=True)
-    for fa in dataset_new.frame_annots:
-        if fa.meta is not None:
-            fa.subset = fa.meta.get("frame_type", None)
+    
+    # Finally annotate the frame annotations with the name of the subset
+    # stored in meta.
+    for frame_annot in dataset_new.frame_annots:
+        frame_annotation = frame_annot["frame_annotation"]
+        if frame_annotation.meta is not None:
+            frame_annot["subset"] = frame_annotation.meta.get("frame_type", None)
+    
+    # A sanity check - this will crash in case some entries from frame_index are missing
+    # in dataset_new.
+    _ = dataset_new.seq_frame_index_to_dataset_index([frame_index])[0]
+
     return dataset_new
 
 
-def get_available_categories_and_subset_names(dataset_root: str) -> Dict[str, List[str]]:
-    categories_to_subset_names = {}
-    category_dirs = [
-        d for d in glob.glob(os.path.join(dataset_root, "*"))
-        if (os.path.isdir(d) and not d.startswith("_"))
+def get_available_subset_names(dataset_root: str, category: str):
+    category_dir = os.path.join(dataset_root, category)
+    if not os.path.isdir(category_dir):
+        raise ValueError(
+            f"Looking for dataset files in {category_dir}. "
+            + "Please specify a correct dataset_root folder."
+        )
+    set_list_jsons = os.listdir(os.path.join(category_dir , "set_lists"))
+    return [
+        json_file.replace("set_lists_", "").replace(".json", "")
+        for json_file in set_list_jsons
     ]
-    for category_dir in category_dirs:
-        category = os.path.split(category_dir)[-1]
-        categories_to_subset_names[category] = [
-            os.path.splitext(os.path.split(f)[-1])[0].replace("eval_batches_", "")
-            for f in glob(os.path.join(category_dir, "eval_batches", "*.json"))
-        ]
-    return categories_to_subset_names

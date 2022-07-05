@@ -4,11 +4,12 @@
 
 <br>
 
-CO3D: Common Objects In 3D
+CO3D: Common Objects In 3D 
 ==========================
 
-This repository contains a set of tools for working with the Common Objects in 3D <i>(CO3D)</i> dataset.
-The dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction](https://arxiv.org/abs/2109.00512).
+This repository contains a set of tools for working with the <b>2nd version</b> of the Common Objects in 3D <i>(CO3D)</i> dataset.
+
+The original dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction](https://arxiv.org/abs/2109.00512). For accessing the original data, please switch to the `v1` branch of this repository.
 
 <center>
 <img src="./grid.gif" width="800" />
@@ -16,17 +17,27 @@ The dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Lar
 
 
 ## Download the dataset
-The links to all dataset files are present in this repository in `co3d_links.txt`.
+The links to all dataset files are present in this repository in `dataset/links.txt`.
 
 
 ### Automatic batch-download
 We also provide a python script that allows downloading all dataset files at once.
 In order to do so, execute the download script:
     ```
-    python ./download_dataset.py --download_folder DOWNLOAD_FOLDER
+    python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER
     ```
 where `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
 Make sure to create this folder before commencing the download.
+
+
+### Single-sequence dataset subset
+We also provide a subset of the dataset consisting only of the sequences selected for the
+many-view single-sequence task where both training and evaluation are commonly conducted
+on the same single sequence. In order to download this subset add the
+`--single_sequence_subset` option to `download_dataset.py`:
+    ```
+    python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER --single_sequence_subset
+    ```
 
 
 ## Installation
@@ -37,7 +48,7 @@ This is a `Python 3` / `PyTorch` codebase.
 ```
 pip install lpips visdom tqdm requests
 ```
-Note that the core data model in `dataset/types.py` is independent of `PyTorch` and can be imported and used with other machine-learning frameworks.
+4) Install the CO3D package itself: `pip install -e .`
 
 
 ##  Dependencies
@@ -51,7 +62,7 @@ Note that the core data model in `dataset/types.py` is independent of `PyTorch` 
 
 ## Getting started
 1. Install dependencies - See [Installation](#installation) above.
-2. Download the dataset [here](https://ai.facebook.com/datasets/co3d-downloads/) to a given root folder `DATASET_ROOT_FOLDER`.
+2. Download the dataset [here] to a given root folder `DATASET_ROOT_FOLDER`.
 3. In `dataset/dataset_zoo.py` set the `DATASET_ROOT` variable to your DATASET_ROOT_FOLDER`:
     ```
     dataset_zoo.py:25: DATASET_ROOT = DATASET_ROOT_FOLDER
@@ -74,6 +85,24 @@ python -m unittest
 https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer
 
 
+## PyTorch-independent usage
+Note that the core data model in `co3d/dataset/data_types.py` is independent of `PyTorch`/`PyTorch3D` and can be imported and used with other machine-learning frameworks.
+
+For example, in order to load the per-category frame and sequence annotations users can execute the following code:
+```python
+from typing import List
+from co3d.dataset.data_types import (
+    load_dataclass_jgzip, FrameAnnotation, SequenceAnnotation
+)
+category_frame_annotations = load_dataclass_jgzip(
+    f"{DATASET_ROOT}/{category_name}/frame_annotations.jgz", List[FrameAnnotation]
+)
+category_sequence_annotations = load_dataclass_jgzip(
+    f"{DATASET_ROOT}/{category_name}/sequence_annotations.jgz", List[SequenceAnnotation]
+)
+```
+
+
 ## Reference
 If you use our dataset, please use the following citation:
 ```
@@ -87,7 +116,7 @@ If you use our dataset, please use the following citation:
 
 
 ## License
-The CO3D codebase is released under the [BSD License](LICENSE).
+The CO3D codebase is released under the [CC BY 4.0](LICENSE).
 
 
 ## Overview video

@@ -1,6 +1,15 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+
+
 import os
 import shutil
 import tempfile
+import logging
+import errno
 
 from typing import Optional, Tuple
 from dataclasses import dataclass
@@ -15,6 +24,9 @@ from .io import (
     load_all_eval_batches,
     store_rgbda_frame,
 )
+
+
+logger = logging.getLogger(__file__)
 
 
 class CO3DSubmission:
@@ -34,12 +46,12 @@ class CO3DSubmission:
         self.server_data_folder = server_data_folder
         self.on_server = on_server
         self.submission_archive = os.path.join(
-            output_folder,
-            f"submission_{task.value}_{sequence_set.value}.zip"
+            output_folder, f"submission_{task.value}_{sequence_set.value}.zip"
         )
         self.submission_cache = os.path.join(output_folder, "submission_cache")
         os.makedirs(self.submission_cache, exist_ok=True)
         self._result_list = []
+        self._eval_batches_map = None
 
     @staticmethod
     def get_submission_cache_image_dir(
@@ -57,7 +69,7 @@ class CO3DSubmission:
         frame_number: int,
         image: np.ndarray,
         mask: np.ndarray,
-        depth: np.ndarray
+        depth: np.ndarray,
     ):
         res = CO3DSubmissionRender(
             category=category,
@@ -68,6 +80,7 @@ class CO3DSubmission:
         )
         res_file = res.get_image_path(self.submission_cache)
         os.makedirs(os.path.dirname(res_file), exist_ok=True)
+        logger.debug(f"Storing submission files {res_file}.")
         store_rgbda_frame(
             RGBDAFrame(image=image, mask=mask, depth=depth),
             res_file,
@@ -75,18 +88,17 @@ class CO3DSubmission:
         self._result_list.append(res)
 
     def _get_result_frame_index(self):
-        return {
-            (res.sequence_name, res.frame_number): res
-            for res in self._result_list
-        }
+        return {(res.sequence_name, res.frame_number): res for res in self._result_list}
 
     def _get_eval_batches_map(self):
         if self._eval_batches_map is None:
             self._eval_batches_map = load_all_eval_batches(
-                self.dataset_root, self.task, self.sequence_set, remove_frame_paths=False
-            )
-        else:
-            return self._eval_batches_map
+                self.dataset_root,
+                self.task,
+                self.sequence_set,
+                remove_frame_paths=False,
+            )    
+        return self._eval_batches_map
 
     def _validate_results(self):
         raise NotImplementedError("")
@@ -125,9 +137,9 @@ class CO3DSubmission:
         else:
             if not os.path.isdir(self.dataset_root):
                 raise ValueError("For evaluation dataset_root has to be specified.")
-            if self.sequence_set==CO3DSequenceSet.TEST:
+            if self.sequence_set == CO3DSequenceSet.TEST:
                 raise ValueError("Cannot evaluate on the hidden test set!")
-            
+
         eval_batches_map = self._get_eval_batches_map()
 
         eval_exceptions = {}
@@ -141,55 +153,73 @@ class CO3DSubmission:
                 subset_name,
             )
 
+            # The case with no predicted results.
+            if (
+                (not os.path.isdir(pred_category_subset_dir))
+                or (len(os.listdir(pred_category_subset_dir))==0)
+            ):
+                logger.info(f"No evaluation predictions for {category}/{subset_name}")
+                eval_results[(category, subset_name)] = (None, None)
+                eval_exceptions[(category, subset_name)] = (None, None)
+                continue
+
             # Make a temporary GT folder with symlinks to GT data based on eval batches
-            with tempfile.TemporaryDirectory() as gt_category_subset_dir:
-                for b in eval_batches:
-                    if self.on_server:
-                        _link_eval_batch_data_from_server_db_to_gt_tempdir(
-                            self.server_data_folder,
-                            gt_category_subset_dir,
-                            category,
-                            b[0],
-                        )
-                    else:
-                        _link_eval_batch_data_from_dataset_root_to_gt_tempdir(
-                            self.dataset_root,
-                            gt_category_subset_dir,
-                            category,
-                            b[0],
-                        )
-                
-                # Evaluate and catch any exceptions.
-                try:
-                    eval_results[(category, subset_name)] = evaluate_file_folders(
-                        pred_category_subset_dir,
+            gt_category_subset_dir = CO3DSubmission.get_submission_cache_image_dir(
+                self.submission_cache,
+                category,
+                "GT_" + subset_name,
+            )
+            
+            for b in eval_batches:
+                if self.on_server:
+                    _link_eval_batch_data_from_server_db_to_gt_tempdir(
+                        self.server_data_folder,
                         gt_category_subset_dir,
+                        category,
+                        b,
+                    )
+                else:
+                    _link_eval_batch_data_from_dataset_root_to_gt_tempdir(
+                        self.dataset_root,
+                        gt_category_subset_dir,
+                        category,
+                        b,
                     )
 
-                except Exception as exc:
-                    eval_results[(category, subset_name)] = None, None
-                    eval_exceptions[(category, subset_name)] = exc
+            # Evaluate and catch any exceptions.
+            try:
+                eval_results[(category, subset_name)] = evaluate_file_folders(
+                    pred_category_subset_dir,
+                    gt_category_subset_dir,
+                )
+
+            except Exception as exc:
+                eval_results[(category, subset_name)] = (None, None)
+                eval_exceptions[(category, subset_name)] = exc
 
 
-        # Automatically generates NaNs if some results are missing.
+        # Get the average results.
         average_results = {}
         for m in EVAL_METRIC_NAMES:
+            # Automatically generates NaN average if some results are missing.
             average_results[m] = sum(
                 eval_result[m] if eval_result is not None else float("NaN")
-                for (eval_result, _) in eval_results.values()
+                for eval_result, _ in eval_results.values()
             ) / len(eval_results)
-        eval_results[("MEAN", "-")] = average_results
+        eval_results[("MEAN", "-")] = average_results, None
 
         # Generate a nice table and print.
-        for ((category, subset_name), (eval_result, _)) in eval_results.items():
+        tab_rows = []
+        for (category, subset_name), (eval_result, _) in eval_results.items():
             tab_row = [category, subset_name]
-            if eval_result[0] is None:
-                tab_row.extend([float("NaN")] * len(EVAL_METRIC_NAMES)])
+            if eval_result is None:
+                tab_row.extend([float("NaN")] * len(EVAL_METRIC_NAMES))
             else:
-                tab_row.extend(list(eval_result.values()))
+                tab_row.extend([eval_result[k] for k in EVAL_METRIC_NAMES])
+            tab_rows.append(tab_row)
 
         print(
-            tabulate(tab_row, headers=["Category", "Subset name", *EVAL_METRIC_NAMES])
+            tabulate(tab_rows, headers=["Category", "Subset name", *EVAL_METRIC_NAMES])
         )
 
         return eval_results
@@ -202,7 +232,7 @@ class CO3DSubmissionRender:
     sequence_name: str
     frame_number: int
     rgbda_frame: Optional[RGBDAFrame] = None
-        
+
     def get_image_path(self, root_dir: str):
         return os.path.join(
             CO3DSubmission.get_submission_cache_image_dir(
@@ -229,15 +259,18 @@ def _link_eval_batch_data_from_dataset_root_to_gt_tempdir(
 ):
     sequence_name, frame_number, gt_image_path = frame_index
     image_name = get_submission_image_name(category, sequence_name, frame_number)
+    os.makedirs(temp_dir, exist_ok=True)
     for data_type in ["image", "depth", "mask", "depth_mask"]:
         gt_data_path = gt_image_path.replace("/images/", f"/{data_type}s/")
-        if data_type != "image":
+        if data_type=="depth":
+            gt_data_path = gt_data_path.replace(".jpg", ".jpg.geometric.png")
+        elif data_type in ("mask", "depth_mask"):
             gt_data_path = gt_data_path.replace(".jpg", ".png")
         tgt_image_name = f"{image_name}_{data_type}.png"
-        src = os.path.join(dataset_root, gt_image_path)
+        src = os.path.join(dataset_root, gt_data_path)
         dst = os.path.join(temp_dir, tgt_image_name)
-        print(f"{src}\n<---\n{dst}")
-        # os.symlink(src, dst)
+        logger.debug(f"{src} <--- {dst}")
+        _symlink_force(src, dst)
 
 
 def _link_eval_batch_data_from_server_db_to_gt_tempdir(
@@ -252,7 +285,16 @@ def _link_eval_batch_data_from_server_db_to_gt_tempdir(
         image_name_postfixed = image_name + f"_{data_type}.png"
         src = os.path.join(server_folder, image_name_postfixed)
         dst = os.path.join(temp_dir, image_name_postfixed)
-        print(f"{src}\n<---\n{dst}")
-        # os.symlink(src, dst)
+        logger.debug(f"{src}<---{dst}")
+        _symlink_force(src, dst)
 
 
+def _symlink_force(target, link_name):
+    try:
+        os.symlink(target, link_name)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            os.remove(link_name)
+            os.symlink(target, link_name)
+        else:
+            raise e

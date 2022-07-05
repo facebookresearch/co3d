@@ -25,13 +25,13 @@ from pytorch3d.vis.plotly_vis import plot_scene
 class TestDatasetVisualize(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42)
-        category = 'skateboard'
+        category = "skateboard"
         dataset_root = DATASET_ROOT
-        frame_file = os.path.join(dataset_root, category, 'frame_annotations.jgz')
-        sequence_file = os.path.join(dataset_root, category, 'sequence_annotations.jgz')
+        frame_file = os.path.join(dataset_root, category, "frame_annotations.jgz")
+        sequence_file = os.path.join(dataset_root, category, "sequence_annotations.jgz")
         self.image_size = 256
         self.datasets = {
-            'simple': JsonIndexDataset(
+            "simple": JsonIndexDataset(
                 frame_annotations_file=frame_file,
                 sequence_annotations_file=sequence_file,
                 dataset_root=dataset_root,
@@ -40,7 +40,7 @@ class TestDatasetVisualize(unittest.TestCase):
                 box_crop=True,
                 load_point_clouds=True,
             ),
-            'nonsquare': JsonIndexDataset(
+            "nonsquare": JsonIndexDataset(
                 frame_annotations_file=frame_file,
                 sequence_annotations_file=sequence_file,
                 dataset_root=dataset_root,
@@ -49,7 +49,7 @@ class TestDatasetVisualize(unittest.TestCase):
                 box_crop=True,
                 load_point_clouds=True,
             ),
-            'nocrop': JsonIndexDataset(
+            "nocrop": JsonIndexDataset(
                 frame_annotations_file=frame_file,
                 sequence_annotations_file=sequence_file,
                 dataset_root=dataset_root,
@@ -61,13 +61,11 @@ class TestDatasetVisualize(unittest.TestCase):
         }
         self.visdom = Visdom()
         if not self.visdom.check_connection():
-            print('Visdom server not running! Disabling visdom visualisations.')
+            print("Visdom server not running! Disabling visdom visualisations.")
             self.visdom = None
-        
+
     def _render_one_pointcloud(self, point_cloud, cameras, render_size):
-        (
-            _image_render, _, _
-        ) = render_point_cloud_pytorch3d(
+        (_image_render, _, _) = render_point_cloud_pytorch3d(
             cameras,
             point_cloud,
             render_size=render_size,
@@ -92,7 +90,7 @@ class TestDatasetVisualize(unittest.TestCase):
         dataset = self.datasets[dataset_key]
         # load the point cloud of the first sequence
         sequence_show = list(dataset.seq_annots.keys())[0]
-        device = torch.device('cuda:0')
+        device = torch.device("cuda:0")
 
         point_cloud, sequence_frame_data = get_implicitron_sequence_pointcloud(
             dataset,
@@ -108,40 +106,46 @@ class TestDatasetVisualize(unittest.TestCase):
         cameras = sequence_frame_data.camera.to(device)
 
         # render the point_cloud from the viewpoint of loaded cameras
-        images_render = torch.cat([
-            self._render_one_pointcloud(
-                point_cloud,
-                cameras[frame_i],
-                (dataset.image_height, dataset.image_width,),
-            ) for frame_i in range(len(cameras))
-        ]).cpu()
+        images_render = torch.cat(
+            [
+                self._render_one_pointcloud(
+                    point_cloud,
+                    cameras[frame_i],
+                    (
+                        dataset.image_height,
+                        dataset.image_width,
+                    ),
+                )
+                for frame_i in range(len(cameras))
+            ]
+        ).cpu()
         images_gt_and_render = torch.cat(
             [sequence_frame_data.image_rgb, images_render], dim=3
         )
 
         imfile = os.path.join(
             os.path.split(os.path.abspath(__file__))[0],
-            f'test_dataset_visualize'
-            + f'_max_frames={max_frames}'
-            + f'_load_pcl={load_dataset_point_cloud}'
-            + f'_dataset_key={dataset_key}.png',
+            f"test_dataset_visualize"
+            + f"_max_frames={max_frames}"
+            + f"_load_pcl={load_dataset_point_cloud}"
+            + f"_dataset_key={dataset_key}.png",
         )
-        print(f'Exporting image {imfile}.')
+        print(f"Exporting image {imfile}.")
         torchvision.utils.save_image(images_gt_and_render, imfile, nrow=2)
 
         if self.visdom is not None:
             test_name = f"{max_frames}_{load_dataset_point_cloud}_{dataset_key}"
             self.visdom.images(
                 images_gt_and_render,
-                env='test_dataset_visualize',
-                win=f'pcl_renders_{test_name}',
-                opts={'title': f'pcl_renders_{test_name}'},
+                env="test_dataset_visualize",
+                win=f"pcl_renders_{test_name}",
+                opts={"title": f"pcl_renders_{test_name}"},
             )
             plotlyplot = plot_scene(
                 {
-                    'scene_batch': {
-                        'cameras': cameras,
-                        'point_cloud': point_cloud,
+                    "scene_batch": {
+                        "cameras": cameras,
+                        "point_cloud": point_cloud,
                     }
                 },
                 camera_scale=1.0,
@@ -150,6 +154,6 @@ class TestDatasetVisualize(unittest.TestCase):
             )
             self.visdom.plotlyplot(
                 plotlyplot,
-                env='test_dataset_visualize',
-                win=f'pcl_{test_name}',
+                env="test_dataset_visualize",
+                win=f"pcl_{test_name}",
             )

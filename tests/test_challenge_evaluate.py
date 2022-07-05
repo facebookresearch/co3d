@@ -28,16 +28,16 @@ from co3d.challenge.main import evaluate_file_folders
 class TestIO(unittest.TestCase):
     def test_save_load(self):
         H = 100
-        W = 200    
+        W = 200
         with tempfile.TemporaryDirectory() as tmpd:
             for data_type in ["image", "mask", "depth"]:
                 with self.subTest(data_type):
                     for _ in range(10):
                         C = {"mask": 1, "depth": 1, "image": 3}[data_type]
                         data = np.random.uniform(size=(C, H, W))
-                        if data_type=="mask":
+                        if data_type == "mask":
                             data = (data > 0.5).astype(np.float32)
-                        if C==1:
+                        if C == 1:
                             data = data[0]
                         load_fun, store_fun = {
                             "mask": (load_mask, store_mask),
@@ -47,7 +47,7 @@ class TestIO(unittest.TestCase):
                         fl = os.path.join(tmpd, f"{data_type}.png")
                         store_fun(data, fl)
                         data_ = load_fun(fl)
-                        self.assertTrue(np.allclose(data, data_, atol=1/255))
+                        self.assertTrue(np.allclose(data, data_, atol=1 / 255))
 
 
 class TestMetricUtils(unittest.TestCase):
@@ -92,19 +92,22 @@ class TestEvalScript(unittest.TestCase):
         N = 30
         H = 120
         W = 200
-        with tempfile.TemporaryDirectory() as tmp_pred, \
-            tempfile.TemporaryDirectory() as tmp_gt:
+        with tempfile.TemporaryDirectory() as tmp_pred, tempfile.TemporaryDirectory() as tmp_gt:
             _generate_random_submission_data(tmp_pred, N, H, W)
             _generate_random_submission_data(tmp_gt, N, H, W)
             avg_result, per_example_result = evaluate_file_folders(tmp_pred, tmp_gt)
             metrics = list(avg_result.keys())
             for m in metrics:
-                self.assertTrue(np.allclose(
-                    np.mean([r[m] for r in per_example_result]),
-                    avg_result[m],
-                ))
-            import pdb; pdb.set_trace()
-            self.assertTrue(len(per_example_result)==N)
+                self.assertTrue(
+                    np.allclose(
+                        np.mean([r[m] for r in per_example_result]),
+                        avg_result[m],
+                    )
+                )
+            import pdb
+
+            pdb.set_trace()
+            self.assertTrue(len(per_example_result) == N)
 
     def test_wrong_fake_data(self):
         N = 30
@@ -112,21 +115,20 @@ class TestEvalScript(unittest.TestCase):
         W = 200
 
         # different number of eval/test examples
-        for N_pred in [N-2, N+2]:
-            with tempfile.TemporaryDirectory() as tmp_pred, \
-                tempfile.TemporaryDirectory() as tmp_gt:
+        for N_pred in [N - 2, N + 2]:
+            with tempfile.TemporaryDirectory() as tmp_pred, tempfile.TemporaryDirectory() as tmp_gt:
                 _generate_random_submission_data(tmp_pred, N_pred, H, W)
                 _generate_random_submission_data(tmp_gt, N, H, W)
                 msg = (
-                    "Unexpected submitted evaluation examples" if N_pred > N 
+                    "Unexpected submitted evaluation examples"
+                    if N_pred > N
                     else "There are missing evaluation examples"
                 )
                 with self.assertRaisesRegex(ValueError, msg):
                     evaluate_file_folders(tmp_pred, tmp_gt)
 
         # some eval examples missing depth/image
-        with tempfile.TemporaryDirectory() as tmp_pred, \
-            tempfile.TemporaryDirectory() as tmp_gt:
+        with tempfile.TemporaryDirectory() as tmp_pred, tempfile.TemporaryDirectory() as tmp_gt:
             _generate_random_submission_data(tmp_pred, N_pred, H, W)
             _generate_random_submission_data(tmp_gt, N, H, W)
             pred_file_names = get_result_directory_file_names(tmp_pred)
@@ -142,9 +144,7 @@ class TestEvalScript(unittest.TestCase):
 
 def _generate_random_submission_data(folder, N, H, W):
     for example_num in range(N):
-        root_path = os.path.join(
-            folder, f"example_{example_num}"
-        )
+        root_path = os.path.join(folder, f"example_{example_num}")
         store_rgbda_frame(_random_rgbda_frame(H, W), root_path)
 
 
@@ -156,9 +156,9 @@ def _random_implicitron_render(
 ):
     mask = _random_input_tensor(N, 1, H, W, True, device)
     return ImplicitronRender(
-        depth_render=_random_input_tensor(N, 1, H, W, False, device), 
-        image_render=_random_input_tensor(N, 3, H, W, False, device) * mask, 
-        mask_render=mask, 
+        depth_render=_random_input_tensor(N, 1, H, W, False, device),
+        image_render=_random_input_tensor(N, 3, H, W, False, device) * mask,
+        mask_render=mask,
     )
 
 
@@ -178,12 +178,15 @@ def _random_frame_data(
 ):
     R, T = look_at_view_transform(azim=torch.rand(N) * 360)
     cameras = PerspectiveCameras(R=R, T=T, device=device)
-    depth_map_common = torch.stack(
-        torch.meshgrid(
-            torch.linspace(0.0, 1.0, H),
-            torch.linspace(0.0, 1.0, W),
-        )
-    ).mean(dim=0) + 0.1
+    depth_map_common = (
+        torch.stack(
+            torch.meshgrid(
+                torch.linspace(0.0, 1.0, H),
+                torch.linspace(0.0, 1.0, W),
+            )
+        ).mean(dim=0)
+        + 0.1
+    )
     depth_map = _random_input_tensor(N, 1, H, W, False, device) + depth_map_common[None]
     random_args = {
         "frame_number": torch.arange(N),
@@ -195,7 +198,7 @@ def _random_frame_data(
         "mask_crop": torch.ones(N, 1, H, W, device=device),
         "sequence_name": ["sequence"] * N,
         "image_rgb": _random_input_tensor(N, 3, H, W, False, device),
-        "frame_type": ["test_unseen", *(["test_known"] * (N-1))]
+        "frame_type": ["test_unseen", *(["test_known"] * (N - 1))],
     }
     return FrameData(**random_args)
 
@@ -214,5 +217,5 @@ def _random_input_tensor(
     return T
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

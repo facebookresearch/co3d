@@ -61,7 +61,7 @@ def eval_one_rgbda(
         "depth_abs_fg": abs_depth,
         "iou": iou,
     }
-    
+
 
 def calc_psnr(
     x: np.ndarray,
@@ -88,13 +88,13 @@ def calc_mse(
         return np.mean((x - y) ** 2)
     else:
         mask_expand = np.broadcast_to(mask, x.shape)
-        return (((x - y) ** 2) * mask_expand).sum() / np.clip(mask_expand.sum(), 1e-5, None)
+        return (((x - y) ** 2) * mask_expand).sum() / np.clip(
+            mask_expand.sum(), 1e-5, None
+        )
 
 
 def rgb_l1(
-    pred: np.ndarray,
-    target: np.ndarray,
-    mask: Optional[np.ndarray] = None
+    pred: np.ndarray, target: np.ndarray, mask: Optional[np.ndarray] = None
 ) -> np.float32:
     """
     Calculates the mean absolute error between the predicted colors `pred`
@@ -127,11 +127,13 @@ def calc_mse_abs_depth(
     if get_best_scale:
         # mult preds by a scalar "scale_best"
         # 	s.t. we get best possible mse error
-        scale_best = estimate_depth_scale_factor(pred, target, dmask, best_scale_clamp_thr)
+        scale_best = estimate_depth_scale_factor(
+            pred, target, dmask, best_scale_clamp_thr
+        )
         pred = pred * scale_best
 
     df = target - pred
-    mse_depth = (dmask * (df**2)).sum() / dmask_mass
+    mse_depth = (dmask * (df ** 2)).sum() / dmask_mass
     abs_depth = (dmask * np.abs(df)).sum() / dmask_mass
     return mse_depth, abs_depth
 

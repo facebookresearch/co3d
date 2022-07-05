@@ -17,10 +17,14 @@ import numpy as np
 if sys.version_info >= (3, 8, 0):
     from typing import get_args, get_origin
 elif sys.version_info >= (3, 7, 0):
+
     def get_origin(cls):  # pragma: no cover
         return getattr(cls, "__origin__", None)
+
     def get_args(cls):  # pragma: no cover
         return getattr(cls, "__args__", None)
+
+
 else:
     raise ImportError("This module requires Python 3.7+")
 
