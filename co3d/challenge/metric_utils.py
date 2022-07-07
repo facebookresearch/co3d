@@ -7,6 +7,7 @@
 import math
 import numpy as np
 from typing import Optional
+from typing import Tuple
 from .data_types import RGBDAFrame
 
 
@@ -24,6 +25,7 @@ def eval_one(
         target.image,
         target.depth,
         target.mask,
+        gt_depth_mask=target.depth_mask,
     )
 
 
@@ -34,15 +36,55 @@ def eval_one_rgbda(
     gt_image_rgb: np.ndarray,
     gt_depth_map: np.ndarray,
     gt_fg_mask: np.ndarray,
+    gt_depth_mask: Optional[np.ndarray] = None,
+    crop_around_fg_mask: bool = False,
 ):
     """
-    image_rgb: 3xHxW, black background
-    depth_map: 1xHxW
-    fg_mask: 1xHxW in {0, 1}
-    gt_image_rgb: 3xHxW, black background
-    gt_depth_map: 1xHxW
-    gt_fg_mask: 1xHxW in {0, 1}
+    Args:
+        image_rgb: 3xHxW, black background
+        depth_map: 1xHxW
+        fg_mask: 1xHxW in {0, 1}
+        gt_image_rgb: 3xHxW, black background
+        gt_depth_map: 1xHxW
+        gt_fg_mask: 1xHxW in {0, 1}
+        gt_depth_mask: 1xHxW in {0, 1}
+
+    Returns:
+        eval_result: a dictionary {metric_name: str: metric_value: float}
     """
+
+    # chuck non-finite depth
+    gt_depth_map[~np.isfinite(gt_depth_map)] = 0
+
+    if gt_depth_mask is not None:
+        gt_depth_map = gt_depth_map * gt_depth_mask
+    
+    if crop_around_fg_mask:
+        import pdb; pdb.set_trace()
+        fg_mask_box_xxyy = _get_bbox_from_mask(gt_fg_mask[0])
+        [
+            image_rgb,
+            depth_map,
+            fg_mask,
+            gt_image_rgb,
+            gt_depth_map,
+            gt_fg_mask,
+            gt_depth_mask,
+        ] = [
+            x[
+                :, 
+                fg_mask_box_xxyy[2]:fg_mask_box_xxyy[3],
+                fg_mask_box_xxyy[0]:fg_mask_box_xxyy[1],
+            ] for x in [
+                image_rgb,
+                depth_map,
+                fg_mask,
+                gt_image_rgb,
+                gt_depth_map,
+                gt_fg_mask,
+                gt_depth_mask,
+            ]
+        ]
 
     gt_image_rgb_masked = gt_image_rgb * gt_fg_mask
     psnr = calc_psnr(image_rgb, gt_image_rgb_masked)
@@ -54,6 +96,10 @@ def eval_one_rgbda(
         crop=5,
     )
     iou = calc_iou(fg_mask, gt_fg_mask)
+
+    if not np.isfinite(abs_depth):
+        import pdb; pdb.set_trace()
+        pass
 
     return {
         "psnr": psnr,
@@ -160,3 +206,36 @@ def calc_iou(
     intersect = (predict * target).sum()
     union = (predict + target - predict * target).sum() + 1e-4
     return intersect / union
+
+
+def _get_bbox_from_mask(
+    mask: np.ndarray,
+    box_crop_context: float = 0.1,
+    thr: float = 0.5,
+    decrease_quant: float = 0.05,
+) -> Tuple[int, int, int, int]:
+    # bbox in xywh
+    masks_for_box = np.zeros_like(mask)
+    while masks_for_box.sum() <= 1.0:
+        masks_for_box = (mask > thr).astype(np.float32)
+        thr -= decrease_quant
+    assert thr > 0.0
+    x0, x1 = _get_1d_bounds(masks_for_box.sum(axis=-2))
+    y0, y1 = _get_1d_bounds(masks_for_box.sum(axis=-1))
+    h, w = y1 - y0 + 1, x1 - x0 + 1
+    if box_crop_context > 0.0:
+        c = box_crop_context
+        x0 -= w * c / 2
+        y0 -= h * c / 2
+        h += h * c
+        w += w * c
+        x1 = x0 + w
+        y1 = y0 + h
+    x0, x1 = [np.clip(x_, 0, mask.shape[1]) for x_ in [x0, x1]]
+    y0, y1 = [np.clip(y_, 0, mask.shape[0]) for y_ in [y0, y1]]
+    return np.round(np.array(x0, x1, y0, y1)).astype(int).tolist()
+
+
+def _get_1d_bounds(arr: np.ndarray) -> Tuple[int, int]:
+    nz = np.flatnonzero(arr)
+    return nz[0], nz[-1]

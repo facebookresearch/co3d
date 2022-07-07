@@ -14,10 +14,13 @@ from visdom import Visdom
 
 # from dataset.co3d_dataset import Co3dDataset
 
-DATASET_ROOT = ""
+# _CO3D_DATASET_ROOT: str = os.getenv("CO3D_DATASET_ROOT", "")
+_CO3D_DATASET_ROOT: str = "/large_experiments/p3/replay/datasets/co3d/co3d45k_220512/export_v10/"
 
-from pytorch3d.implicitron.dataset.visualize import get_implicitron_sequence_pointcloud
+
 from pytorch3d.implicitron.tools.point_cloud_utils import render_point_cloud_pytorch3d
+from pytorch3d.implicitron.tools.config import expand_args_fields
+from pytorch3d.implicitron.dataset.visualize import get_implicitron_sequence_pointcloud
 from pytorch3d.implicitron.dataset.json_index_dataset import JsonIndexDataset
 from pytorch3d.vis.plotly_vis import plot_scene
 
@@ -26,10 +29,11 @@ class TestDatasetVisualize(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42)
         category = "skateboard"
-        dataset_root = DATASET_ROOT
+        dataset_root = _CO3D_DATASET_ROOT
         frame_file = os.path.join(dataset_root, category, "frame_annotations.jgz")
         sequence_file = os.path.join(dataset_root, category, "sequence_annotations.jgz")
         self.image_size = 256
+        expand_args_fields(JsonIndexDataset)
         self.datasets = {
             "simple": JsonIndexDataset(
                 frame_annotations_file=frame_file,
@@ -72,6 +76,7 @@ class TestDatasetVisualize(unittest.TestCase):
             point_radius=1e-2,
             topk=10,
             bg_color=0.0,
+            bin_size=0,
         )
         return _image_render.clamp(0.0, 1.0)
 
@@ -120,7 +125,11 @@ class TestDatasetVisualize(unittest.TestCase):
             ]
         ).cpu()
         images_gt_and_render = torch.cat(
-            [sequence_frame_data.image_rgb, images_render], dim=3
+            [
+                sequence_frame_data.image_rgb,
+                images_render, 
+                (sequence_frame_data.image_rgb-images_render).abs(),
+            ], dim=3
         )
 
         imfile = os.path.join(
@@ -157,3 +166,7 @@ class TestDatasetVisualize(unittest.TestCase):
                 env="test_dataset_visualize",
                 win=f"pcl_{test_name}",
             )
+
+
+if __name__ == "__main__":
+    unittest.main()

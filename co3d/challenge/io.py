@@ -7,6 +7,7 @@
 
 import os
 import json
+import logging
 import numpy as np
 from PIL import Image
 from typing import Optional
@@ -14,18 +15,41 @@ from typing import Optional
 from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 
 
+logging.getLogger(__file__)
+
+
 def store_rgbda_frame(rgbda_frame: RGBDAFrame, fl: str):
     store_mask(rgbda_frame.mask[0], fl + "_mask.png")
     store_depth(rgbda_frame.depth[0], fl + "_depth.png")
     store_image(rgbda_frame.image, fl + "_image.png")
+    if rgbda_frame.depth_mask is not None:
+        store_1bit_png_mask(rgbda_frame.depth_mask[0], fl + "depth_mask.png")
 
 
-def load_rgbda_frame(fl: str) -> RGBDAFrame:
-    return RGBDAFrame(
+def load_rgbda_frame(fl: str, check_for_depth_mask: bool = False) -> RGBDAFrame:
+    f = RGBDAFrame(
         mask=load_mask(os.path.realpath(fl + "_mask.png"))[None],
         depth=load_depth(os.path.realpath(fl + "_depth.png"))[None],
         image=load_image(os.path.realpath(fl + "_image.png")),
     )
+    if check_for_depth_mask:
+        depth_mask_path = fl + "_depth_mask.png"
+        if os.path.isfile(depth_mask_path):
+            f.depth_mask = load_1bit_png_mask(depth_mask_path)[None]
+    return f
+
+
+def store_1bit_png_mask(mask: np.ndarray, fl: str):
+    """
+    mask: HxW
+    """
+    Image.fromarray((mask*255).astype('u1'), mode='L').convert('1').save(fl, "PNG")
+
+
+def load_1bit_png_mask(file: str) -> np.ndarray:
+    with Image.open(file) as pil_im:
+        mask = (np.array(pil_im.convert("L")) > 0.0).astype(np.float32)
+    return mask
 
 
 def load_mask(fl: str):

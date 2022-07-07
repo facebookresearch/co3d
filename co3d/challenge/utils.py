@@ -12,7 +12,7 @@ import logging
 from tqdm import tqdm
 from collections import defaultdict
 from typing import List, Dict
-from .data_types import CO3DSequenceSet, CO3DTask
+from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 from .metric_utils import eval_one, EVAL_METRIC_NAMES
 from .io import load_rgbda_frame
 
@@ -63,14 +63,19 @@ def check_user_submission_file_paths(
         )
 
 
+def get_data_type_postfix(data_type: str):
+    assert data_type in ["image", "mask", "depth", "depth_mask"]
+    return f"_{data_type}.png"
+
+
 def get_result_directory_file_names(
     result_dir: str, has_depth_masks: bool = False,
 ) -> Dict[str, str]:
     """
     Result directory structure:
-        <test_example_name>_image.png
-        <test_example_name>_mask.png
-        <test_example_name>_depth.png
+        <test_example_name>-image.png
+        <test_example_name>-mask.png
+        <test_example_name>-depth.png
         ...
 
     Returns:
@@ -79,10 +84,13 @@ def get_result_directory_file_names(
 
     result_type_files = {}
     for result_type in ("image", "mask", "depth"):
-        postfix = f"_{result_type}.png"
+        postfix = get_data_type_postfix(result_type)
         matching_files = sorted(glob.glob(os.path.join(result_dir, f"*{postfix}")))
         if has_depth_masks and result_type=="mask":
-            matching_files = [f for f in matching_files if not f.endswith("_depth_mask.png")]
+            matching_files = [
+                f for f in matching_files 
+                if not f.endswith(get_data_type_postfix("depth_mask"))
+            ]
         result_type_files[result_type] = {
             os.path.split(f)[-1][: -len(postfix)]: f for f in matching_files
         }
@@ -133,13 +141,13 @@ def evaluate_file_folders(pred_folder: str, gt_folder: str):
     # examples as user_submission_files.
 
     # Iterate over the gt examples:
-    per_example_results = [
-        eval_one(
-            load_rgbda_frame(ground_truth_files[gt_example]),
-            load_rgbda_frame(user_submission_files[gt_example]),
-        )
-        for gt_example in tqdm(list(ground_truth_files))
-    ]
+    per_example_results = []
+    for gt_example in tqdm(list(ground_truth_files)):
+        gt_rgbda = load_rgbda_frame(ground_truth_files[gt_example], check_for_depth_mask=True)
+        pred_rgbda = load_rgbda_frame(user_submission_files[gt_example])
+        check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
+        per_example_results.append(eval_one(pred_rgbda, gt_rgbda))
+
 
     result = {
         metric: (sum(r[metric] for r in per_example_results) / len(per_example_results))
@@ -147,6 +155,18 @@ def evaluate_file_folders(pred_folder: str, gt_folder: str):
     }
 
     return result, per_example_results
+
+
+def check_same_rgbda_sizes(gt: RGBDAFrame, pred: RGBDAFrame, example_name: str):
+    for data_type in ("image", "mask", "depth"):
+        gt_size, pred_size = [getattr(x, data_type).shape for x in [gt, pred]]
+        if gt_size != pred_size:
+            raise ValueError(
+                f"{example_name}'s size does not match the ground truth."
+                f"{data_type} size: {str(gt_size)} != {str(pred_size)}"
+                " (ground-truth vs. prediction)."
+            )
+    return True
 
 
 def get_annotations_folder(phase_codename: str):

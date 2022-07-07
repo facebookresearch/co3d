@@ -16,13 +16,14 @@ from co3d.challenge.io import (
     store_depth,
     load_image,
     store_image,
+    load_1bit_png_mask,
+    store_1bit_png_mask,
     store_rgbda_frame,
     load_rgbda_frame,
 )
-from co3d.challenge.utils import get_result_directory_file_names
+from co3d.challenge.utils import get_result_directory_file_names, evaluate_file_folders
 from co3d.challenge.metric_utils import eval_one
 from co3d.challenge.data_types import RGBDAFrame
-from co3d.challenge.main import evaluate_file_folders
 
 
 class TestIO(unittest.TestCase):
@@ -30,12 +31,12 @@ class TestIO(unittest.TestCase):
         H = 100
         W = 200
         with tempfile.TemporaryDirectory() as tmpd:
-            for data_type in ["image", "mask", "depth"]:
+            for data_type in ["image", "mask", "depth", "depth_mask"]:
                 with self.subTest(data_type):
                     for _ in range(10):
-                        C = {"mask": 1, "depth": 1, "image": 3}[data_type]
+                        C = {"depth_mask": 1, "mask": 1, "depth": 1, "image": 3}[data_type]
                         data = np.random.uniform(size=(C, H, W))
-                        if data_type == "mask":
+                        if data_type in ("mask", "depth_mask"):
                             data = (data > 0.5).astype(np.float32)
                         if C == 1:
                             data = data[0]
@@ -43,6 +44,7 @@ class TestIO(unittest.TestCase):
                             "mask": (load_mask, store_mask),
                             "depth": (load_depth, store_depth),
                             "image": (load_image, store_image),
+                            "depth_mask": (load_1bit_png_mask, store_1bit_png_mask),
                         }[data_type]
                         fl = os.path.join(tmpd, f"{data_type}.png")
                         store_fun(data, fl)
@@ -55,36 +57,43 @@ class TestMetricUtils(unittest.TestCase):
         H = 100
         W = 200
         for _ in range(20):
-            frame_data = _random_frame_data(2, H, W, "cpu")
             implicitron_render = _random_implicitron_render(2, H, W, "cpu")
-            eval_batch_result = eval_batch(
-                frame_data,
-                implicitron_render,
-            )
+            
+            for has_depth_mask in [True, False]:
+            
+                frame_data = _random_frame_data(2, H, W, "cpu")
+                if not has_depth_mask:
+                    frame_data.depth_mask = None
 
-            pred_rgbda = RGBDAFrame(
-                image=implicitron_render.image_render[0].numpy(),
-                mask=implicitron_render.mask_render[0].numpy(),
-                depth=implicitron_render.depth_render[0].numpy(),
-            )
-
-            gt_rgbda = RGBDAFrame(
-                image=frame_data.image_rgb[0].numpy(),
-                mask=frame_data.fg_probability[0].numpy(),
-                depth=frame_data.depth_map[0].numpy(),
-            )
-
-            eval_one_result = eval_one(
-                pred=pred_rgbda,
-                target=gt_rgbda,
-            )
-
-            # print("eval_batch; eval_one")
-            for k in ["iou", "psnr_fg", "psnr", "depth_abs_fg"]:
-                self.assertTrue(
-                    np.allclose(eval_batch_result[k], eval_one_result[k], atol=1e-5)
+                eval_batch_result = eval_batch(
+                    frame_data,
+                    implicitron_render,
                 )
-                # print(f"{k:15s}: {eval_batch_result[k]:1.3e} - {eval_one_result[k]:1.3e}")
+
+                pred_rgbda = RGBDAFrame(
+                    image=implicitron_render.image_render[0].numpy(),
+                    mask=implicitron_render.mask_render[0].numpy(),
+                    depth=implicitron_render.depth_render[0].numpy(),
+                )
+
+                gt_rgbda = RGBDAFrame(
+                    image=frame_data.image_rgb[0].numpy(),
+                    mask=frame_data.fg_probability[0].numpy(),
+                    depth=frame_data.depth_map[0].numpy(),
+                    depth_mask=frame_data.depth_mask[0].numpy() if has_depth_mask else None,
+                )
+
+                eval_one_result = eval_one(
+                    pred=pred_rgbda,
+                    target=gt_rgbda,
+                )
+
+                # print("eval_batch; eval_one")
+                for k in ["iou", "psnr_fg", "psnr", "depth_abs_fg"]:
+                    self.assertTrue(
+                        np.allclose(eval_batch_result[k], eval_one_result[k], atol=1e-5)
+                    )
+                    # print(f"{k:15s}: {eval_batch_result[k]:1.3e} - {eval_one_result[k]:1.3e}")
 
 
 class TestEvalScript(unittest.TestCase):
@@ -104,10 +113,8 @@ class TestEvalScript(unittest.TestCase):
                         avg_result[m],
                     )
                 )
-            import pdb
-
-            pdb.set_trace()
             self.assertTrue(len(per_example_result) == N)
+
 
     def test_wrong_fake_data(self):
         N = 30
@@ -196,6 +203,7 @@ def _random_frame_data(
         "fg_probability": _random_input_tensor(N, 1, H, W, True, device),
         "depth_map": depth_map,
         "mask_crop": torch.ones(N, 1, H, W, device=device),
+        "depth_mask": _random_input_tensor(N, 1, H, W, True, device),
         "sequence_name": ["sequence"] * N,
         "image_rgb": _random_input_tensor(N, 3, H, W, False, device),
         "frame_type": ["test_unseen", *(["test_known"] * (N - 1))],
