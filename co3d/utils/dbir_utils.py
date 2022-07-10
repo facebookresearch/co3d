@@ -1,5 +1,7 @@
 import dataclasses
 import torch
+from typing import Tuple
+from pytorch3d.renderer.cameras import CamerasBase
 from pytorch3d.implicitron.dataset.json_index_dataset import JsonIndexDataset
 from pytorch3d.implicitron.dataset.dataset_base import FrameData
 from pytorch3d.structures import Pointclouds
@@ -13,16 +15,17 @@ from pytorch3d.implicitron.tools.point_cloud_utils import (
 
 
 def render_point_cloud(
-    eval_frame_data: FrameData,
+    camera: CamerasBase,
+    render_size: Tuple[int, int],
     sequence_pointcloud: Pointclouds,
     point_radius: float = 0.03,
 ) -> ImplicitronRender:
     # render the sequence point cloud to each evaluation view
     data_rendered, render_mask, depth_rendered = render_point_cloud_pytorch3d(
-        eval_frame_data.camera[[0]],
+        camera,
         sequence_pointcloud,
-        render_size=eval_frame_data.image_rgb.shape[-2:],
-        point_radius=0.03,
+        render_size=render_size,
+        point_radius=point_radius,
         topk=10,
         eps=1e-2,
         bin_size=0,
@@ -90,6 +93,7 @@ def get_sequence_pointcloud(
     max_loaded_frames: int = 50,
     max_n_points: int = int(3e4),
     seed: int = 42,
+    load_dataset_pointcloud: bool = False,
 ) -> Pointclouds:
     with torch.random.fork_rng():  # fork rng for reproducibility
         torch.manual_seed(seed)
@@ -99,7 +103,7 @@ def get_sequence_pointcloud(
             mask_points=True,
             max_frames=max_loaded_frames,
             num_workers=num_workers,
-            load_dataset_point_cloud=False,
+            load_dataset_point_cloud=load_dataset_pointcloud,
         )
         sequence_pointcloud = _subsample_pointcloud(sequence_pointcloud, max_n_points)
     return sequence_pointcloud

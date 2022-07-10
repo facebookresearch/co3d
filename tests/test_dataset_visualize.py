@@ -12,10 +12,7 @@ import torchvision
 
 from visdom import Visdom
 
-# from dataset.co3d_dataset import Co3dDataset
-
-# _CO3D_DATASET_ROOT: str = os.getenv("CO3D_DATASET_ROOT", "")
-_CO3D_DATASET_ROOT: str = "/large_experiments/p3/replay/datasets/co3d/co3d45k_220512/export_v10/"
+_CO3D_DATASET_ROOT: str = os.getenv("CO3DV2_DATASET_ROOT", "")
 
 
 from pytorch3d.implicitron.tools.point_cloud_utils import render_point_cloud_pytorch3d

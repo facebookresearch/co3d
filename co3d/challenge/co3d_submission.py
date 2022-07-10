@@ -71,6 +71,24 @@ class CO3DSubmission:
         """
         return os.path.join(output_folder, category, subset_name)
 
+
+    def has_only_single_sequence_subset(self):
+        """
+        Returns:
+            has_only_single_sequence: Returns `True` if the present version of the CO3Dv2
+                dataset contains only single-sequence data. Otherwise returns `False`.
+        """
+        if self.dataset_root is None:
+            raise ValueError("dataset_root has to be specified.")
+        eval_batches_map = load_all_eval_batches(self.dataset_root)
+        if any(
+            "fewview_" in subset_name for category, subset_name in eval_batches_map.keys()
+        ):
+            return False
+        else:
+            return True
+
+
     def add_result(
         self,
         category: str,

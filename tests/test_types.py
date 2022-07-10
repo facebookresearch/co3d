@@ -9,8 +9,8 @@ import dataclasses
 from typing import Dict, List, NamedTuple, Tuple
 import unittest
 
-from dataset import types
-from dataset.types import FrameAnnotation
+from co3d.dataset import data_types as types
+from co3d.dataset.data_types import FrameAnnotation
 
 
 class TestDatasetTypes(unittest.TestCase):
