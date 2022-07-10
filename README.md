@@ -4,10 +4,10 @@
 
 <br>
 
-CO3D: Common Objects In 3D (v2) 
-===============================
+CO3Dv2: Common Objects In 3D (version 2) 
+========================================
 
-This repository contains a set of tools for working with the <b>2nd version</b> of the Common Objects in 3D <i>(CO3D)</i> dataset.
+This repository contains a set of tools for working with the <b>2nd version</b> of the Common Objects in 3D <i>(CO3Dv2)</i> dataset.
 
 The original dataset has been introduced in our ICCV'21 paper: [Common Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction](https://arxiv.org/abs/2109.00512). For accessing the original data, please switch to the `v1` branch of this repository.
 
@@ -42,7 +42,7 @@ python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER
 where `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
 Make sure to create this folder before commencing the download.
 
-All zip files of the dataset occupy <b>5.5 TB of disk-space</b>.
+<b>Size:</b> All zip files of the dataset occupy <b>5.5 TB of disk-space</b>.
 
 
 ### Single-sequence dataset subset
@@ -53,7 +53,12 @@ We also provide a subset of the dataset consisting only of the sequences selecte
 python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER --single_sequence_subset
 ```
 
-The single-sequence subset is much smaller than the full dataset and takes <b>8.9 GB of disk-space</b>.
+<b>Size:</b> The single-sequence subset is much smaller than the full dataset and takes <b>8.9 GB of disk-space</b>.
+
+
+# Common Objects in 3D Challenge
+Together with releasing v2 of the dataset, we also organize the Common Objects in 3D Challenge hosted on EvalAI.
+Please visit the [challenge website](https://ngr-co3d.github.io/) and [challenge README](./co3d/challenge/README.md) for the more information.
 
 
 # Installation
@@ -219,10 +224,10 @@ from co3d.dataset.data_types import (
     load_dataclass_jgzip, FrameAnnotation, SequenceAnnotation
 )
 category_frame_annotations = load_dataclass_jgzip(
-    f"{DATASET_ROOT}/{category_name}/frame_annotations.jgz", List[FrameAnnotation]
+    f"{CO3DV2_DATASET_ROOT}/{category_name}/frame_annotations.jgz", List[FrameAnnotation]
 )
 category_sequence_annotations = load_dataclass_jgzip(
-    f"{DATASET_ROOT}/{category_name}/sequence_annotations.jgz", List[SequenceAnnotation]
+    f"{CO3DV2_DATASET_ROOT}/{category_name}/sequence_annotations.jgz", List[SequenceAnnotation]
 )
 ```
 
