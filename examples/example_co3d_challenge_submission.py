@@ -15,23 +15,17 @@ from omegaconf import DictConfig
 
 from pytorch3d.implicitron.dataset.dataset_base import FrameData
 from pytorch3d.implicitron.dataset.dataset_map_provider import DatasetMap
-from pytorch3d.implicitron.dataset.json_index_dataset_map_provider_v2 import JsonIndexDatasetMapProviderV2
+from pytorch3d.implicitron.dataset.json_index_dataset_map_provider_v2 import (
+    JsonIndexDatasetMapProviderV2
+)
 from pytorch3d.implicitron.tools.config import expand_args_fields
 
 from co3d.utils import dbir_utils
 from co3d.challenge.io import get_category_to_subset_name_list
 from co3d.challenge.co3d_submission import CO3DSubmission
 from co3d.challenge.data_types import CO3DTask, CO3DSequenceSet
-from co3d.challenge.utils import (
-    get_co3d_sequence_set_from_subset_name,
-    get_co3d_task_from_subset_name,
-)
 from co3d.dataset.utils import redact_eval_frame_data, _check_valid_eval_frame_data
-# from co3d.dataset.co3d_dataset_v2 import (
-#     CO3DV2DatasetMapProvider,
-# )
 
-#  "/large_experiments/p3/replay/datasets/co3d/co3d45k_220512/export_v20/"
 DATASET_ROOT = os.getenv("CO3DV2_DATASET_ROOT")
 DATASET_ROOT_HIDDEN = os.path.join(DATASET_ROOT, "_hidden", "hidden")
 DATASET_ROOT_HIDDEN_KNOWN = os.path.join(DATASET_ROOT, "_hidden", "known")

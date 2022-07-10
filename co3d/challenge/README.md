@@ -63,11 +63,11 @@ of challenge entries.
 
 ## Submission guide
 1) Install the `co3d` package:
-    ```
-    git clone https://github.com/facebookresearch/co3d
-    cd co3d
-    pip install -e .
-    ```
+```
+git clone https://github.com/facebookresearch/co3d
+cd co3d
+pip install -e .
+```
 
 2) Start by importing the `CO3DSubmission` class and instantiate a submission run.
     For example, the following code:
