@@ -7,7 +7,6 @@
 
 import os
 import shutil
-import tempfile
 import logging
 import errno
 import pickle
@@ -55,7 +54,6 @@ class CO3DSubmission:
         os.makedirs(self.submission_cache, exist_ok=True)
         self._result_list = []
         self._eval_batches_map = None
-
     
     @staticmethod
     def get_submission_cache_image_dir(
@@ -258,6 +256,13 @@ class CO3DSubmission:
             logger.debug(f"Clearing GT link directory {gt_folder}.")
             shutil.rmtree(gt_folder)
 
+
+    def evaluate_zip_file(self, zip_path: str):
+        os.makedirs(self.submission_cache, exist_ok=True)
+        shutil.unpack_archive(zip_path, self.submission_cache, "zip")
+        return self.evaluate()
+
+
     def evaluate(self):
         if self.on_server:
             if not os.path.isdir(self.server_data_folder):
@@ -270,7 +275,7 @@ class CO3DSubmission:
             if self.sequence_set == CO3DSequenceSet.TEST:
                 raise ValueError("Cannot evaluate on the hidden test set!")
 
-        eval_batches_map = self._get_eval_batches_map()
+        eval_batches_map = self.get_eval_batches_map()
 
         # buffers for results and exceptions
         eval_exceptions = {}

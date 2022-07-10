@@ -19,7 +19,6 @@ The original dataset has been introduced in our ICCV'21 paper: [Common Objects i
 ## Download the dataset
 The links to all dataset files are present in this repository in `dataset/links.txt`.
 
-
 ### Automatic batch-download
 We also provide a python script that allows downloading all dataset files at once.
 In order to do so, execute the download script:
@@ -62,16 +61,17 @@ pip install lpips visdom tqdm requests
 
 ## Getting started
 1. Install dependencies - See [Installation](#installation) above.
-2. Download the dataset [here] to a given root folder `DATASET_ROOT_FOLDER`.
-3. In `dataset/dataset_zoo.py` set the `DATASET_ROOT` variable to your DATASET_ROOT_FOLDER`:
+2. Download the dataset [here] to a given root folder `CO3DV2_DATASET_ROOT`.
+3. Set the environment variable `CO3DV2_DATASET_ROOT` to the dataset root:
+    ```bash
+    export CO3DV2_DATASET_ROOT="your_dataset_root_folder"
     ```
-    dataset_zoo.py:25: DATASET_ROOT = DATASET_ROOT_FOLDER
+4. Run `example_co3d_challenge_submission.py`:
     ```
-4. Run `eval_demo.py`:
+    cd examples
+    python example_co3d_challenge_submission.py
     ```
-    python eval_demo.py
-    ```
-    Note that `eval_demo.py` runs an evaluation of a simple depth-based image rendering (DBIR) model on the same data as in the paper. Hence, the results are directly comparable to the numbers reported in the paper.
+    Note that `example_co3d_challenge_submission.py` runs an evaluation of a simple depth-based image rendering (DBIR) model on all challenges and sets of the CO3D Challenge. Feel free to extend the script in order to provide your own submission to the CO3D Challenge.
 
 
 ## Running tests
@@ -81,7 +81,8 @@ python -m unittest
 ```
 
 ## Reproducing results
-[Implicitron](https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer) is our open-source framework used to train all implicit shape learning methods from the CO3D paper. Please visit the following link for more details:
+[Implicitron](https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer) is our open-source framework used to train all implicit shape learning methods from the CO3D paper.
+Please visit the following link for more details:
 https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer
 
 

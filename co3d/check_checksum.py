@@ -73,7 +73,7 @@ def get_expected_sha256s(single_sequence_subset: bool = False):
 
 
 def check_co3d_sha256(
-    path,
+    path: str,
     expected_sha256s: Optional[dict] = None,
     single_sequence_subset: bool = False,
 ):
@@ -86,7 +86,7 @@ def check_co3d_sha256(
     ), f"{extracted_hash} != {expected_sha256s[zipname]}"
 
 
-def sha256_file(path):
+def sha256_file(path: str):
     sha256_hash = hashlib.sha256()
     with open(path, "rb") as f:
         file_buffer = f.read(BLOCKSIZE)

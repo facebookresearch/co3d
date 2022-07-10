@@ -60,6 +60,7 @@ camera parameters are given.
 The `co3d` repository contains tooling that allow a simple generation and submission
 of challenge entries.
 
+
 ## Submission guide
 1) Install the `co3d` package:
     ```

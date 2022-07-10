@@ -1,9 +1,671 @@
-// REDO THIS!!!
 {
-    "singlesequence": {
-        "": ""
-    },
-    "full": {
-
-    },
+  "full": {
+    "ball": [
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_007.zip"
+    ],
+    "carrot": [
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_008.zip"
+    ],
+    "keyboard": [
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_009.zip"
+    ],
+    "toaster": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_005.zip"
+    ],
+    "orange": [
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_006.zip"
+    ],
+    "broccoli": [
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_004.zip"
+    ],
+    "teddybear": [
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_010.zip"
+    ],
+    "hairdryer": [
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_008.zip"
+    ],
+    "vase": [
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_010.zip"
+    ],
+    "backpack": [
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_010.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_011.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_012.zip"
+    ],
+    "pizza": [
+      "https://dl.fbaipublicfiles.com/co3dv2/pizza_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/pizza_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/pizza_002.zip"
+    ],
+    "toyplane": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toyplane_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toyplane_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toyplane_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toyplane_003.zip"
+    ],
+    "wineglass": [
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_007.zip"
+    ],
+    "stopsign": [
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_006.zip"
+    ],
+    "toybus": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toybus_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toybus_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toybus_002.zip"
+    ],
+    "book": [
+      "https://dl.fbaipublicfiles.com/co3dv2/book_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_010.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_011.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_012.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_013.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_014.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_015.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_016.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_017.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_018.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_019.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_020.zip"
+    ],
+    "toytrain": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toytrain_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytrain_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytrain_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytrain_003.zip"
+    ],
+    "laptop": [
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_008.zip"
+    ],
+    "umbrella": [
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_007.zip"
+    ],
+    "toytruck": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_006.zip"
+    ],
+    "mouse": [
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_010.zip"
+    ],
+    "remote": [
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_010.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_011.zip"
+    ],
+    "cake": [
+      "https://dl.fbaipublicfiles.com/co3dv2/cake_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cake_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cake_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cake_003.zip"
+    ],
+    "suitcase": [
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_007.zip"
+    ],
+    "motorcycle": [
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_006.zip"
+    ],
+    "apple": [
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_007.zip"
+    ],
+    "bench": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_008.zip"
+    ],
+    "car": [
+      "https://dl.fbaipublicfiles.com/co3dv2/car_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/car_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/car_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/car_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/car_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/car_005.zip"
+    ],
+    "hotdog": [
+      "https://dl.fbaipublicfiles.com/co3dv2/hotdog_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hotdog_001.zip"
+    ],
+    "banana": [
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_004.zip"
+    ],
+    "plant": [
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_010.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_011.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_012.zip"
+    ],
+    "donut": [
+      "https://dl.fbaipublicfiles.com/co3dv2/donut_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/donut_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/donut_002.zip"
+    ],
+    "couch": [
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_007.zip"
+    ],
+    "hydrant": [
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_009.zip"
+    ],
+    "chair": [
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_010.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_011.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_012.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_013.zip"
+    ],
+    "toilet": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_008.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_009.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_010.zip"
+    ],
+    "cellphone": [
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_006.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_007.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_008.zip"
+    ],
+    "bicycle": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_005.zip"
+    ],
+    "parkingmeter": [
+      "https://dl.fbaipublicfiles.com/co3dv2/parkingmeter_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/parkingmeter_001.zip"
+    ],
+    "cup": [
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_005.zip"
+    ],
+    "skateboard": [
+      "https://dl.fbaipublicfiles.com/co3dv2/skateboard_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/skateboard_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/skateboard_002.zip"
+    ],
+    "baseballbat": [
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballbat_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballbat_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballbat_002.zip"
+    ],
+    "frisbee": [
+      "https://dl.fbaipublicfiles.com/co3dv2/frisbee_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/frisbee_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/frisbee_002.zip"
+    ],
+    "baseballglove": [
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballglove_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballglove_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballglove_002.zip"
+    ],
+    "sandwich": [
+      "https://dl.fbaipublicfiles.com/co3dv2/sandwich_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/sandwich_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/sandwich_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/sandwich_003.zip"
+    ],
+    "handbag": [
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_005.zip"
+    ],
+    "bottle": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_002.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_003.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_004.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_005.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_006.zip"
+    ],
+    "kite": [
+      "https://dl.fbaipublicfiles.com/co3dv2/kite_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/kite_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/kite_002.zip"
+    ],
+    "tv": [
+      "https://dl.fbaipublicfiles.com/co3dv2/tv_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/tv_001.zip"
+    ],
+    "microwave": [
+      "https://dl.fbaipublicfiles.com/co3dv2/microwave_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/microwave_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/microwave_002.zip"
+    ],
+    "bowl": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bowl_000.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bowl_001.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bowl_002.zip"
+    ],
+    "METADATA": [
+      "https://dl.fbaipublicfiles.com/co3dv2/category_to_subset_name_list.json"
+    ]
+  },
+  "singlesequence": {
+    "wineglass": [
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/wineglass_001_singlesequence.zip"
+    ],
+    "vase": [
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/vase_001_singlesequence.zip"
+    ],
+    "umbrella": [
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/umbrella_001_singlesequence.zip"
+    ],
+    "tv": [
+      "https://dl.fbaipublicfiles.com/co3dv2/tv_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/tv_001_singlesequence.zip"
+    ],
+    "toytruck": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytruck_001_singlesequence.zip"
+    ],
+    "toytrain": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toytrain_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toytrain_001_singlesequence.zip"
+    ],
+    "toyplane": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toyplane_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toyplane_001_singlesequence.zip"
+    ],
+    "toybus": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toybus_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toybus_001_singlesequence.zip"
+    ],
+    "toilet": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toilet_001_singlesequence.zip"
+    ],
+    "toaster": [
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/toaster_001_singlesequence.zip"
+    ],
+    "teddybear": [
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/teddybear_001_singlesequence.zip"
+    ],
+    "suitcase": [
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/suitcase_001_singlesequence.zip"
+    ],
+    "stopsign": [
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/stopsign_001_singlesequence.zip"
+    ],
+    "skateboard": [
+      "https://dl.fbaipublicfiles.com/co3dv2/skateboard_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/skateboard_001_singlesequence.zip"
+    ],
+    "sandwich": [
+      "https://dl.fbaipublicfiles.com/co3dv2/sandwich_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/sandwich_001_singlesequence.zip"
+    ],
+    "remote": [
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/remote_001_singlesequence.zip"
+    ],
+    "plant": [
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/plant_001_singlesequence.zip"
+    ],
+    "pizza": [
+      "https://dl.fbaipublicfiles.com/co3dv2/pizza_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/pizza_001_singlesequence.zip"
+    ],
+    "parkingmeter": [
+      "https://dl.fbaipublicfiles.com/co3dv2/parkingmeter_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/parkingmeter_001_singlesequence.zip"
+    ],
+    "orange": [
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/orange_001_singlesequence.zip"
+    ],
+    "mouse": [
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/mouse_001_singlesequence.zip"
+    ],
+    "motorcycle": [
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/motorcycle_001_singlesequence.zip"
+    ],
+    "laptop": [
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/laptop_001_singlesequence.zip"
+    ],
+    "kite": [
+      "https://dl.fbaipublicfiles.com/co3dv2/kite_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/kite_001_singlesequence.zip"
+    ],
+    "keyboard": [
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/keyboard_001_singlesequence.zip"
+    ],
+    "hydrant": [
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hydrant_001_singlesequence.zip"
+    ],
+    "hotdog": [
+      "https://dl.fbaipublicfiles.com/co3dv2/hotdog_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hotdog_001_singlesequence.zip"
+    ],
+    "handbag": [
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/handbag_001_singlesequence.zip"
+    ],
+    "hairdryer": [
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/hairdryer_001_singlesequence.zip"
+    ],
+    "frisbee": [
+      "https://dl.fbaipublicfiles.com/co3dv2/frisbee_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/frisbee_001_singlesequence.zip"
+    ],
+    "donut": [
+      "https://dl.fbaipublicfiles.com/co3dv2/donut_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/donut_001_singlesequence.zip"
+    ],
+    "cup": [
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cup_001_singlesequence.zip"
+    ],
+    "couch": [
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/couch_001_singlesequence.zip"
+    ],
+    "chair": [
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/chair_001_singlesequence.zip"
+    ],
+    "cellphone": [
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cellphone_001_singlesequence.zip"
+    ],
+    "carrot": [
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/carrot_001_singlesequence.zip"
+    ],
+    "car": [
+      "https://dl.fbaipublicfiles.com/co3dv2/car_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/car_001_singlesequence.zip"
+    ],
+    "cake": [
+      "https://dl.fbaipublicfiles.com/co3dv2/cake_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/cake_001_singlesequence.zip"
+    ],
+    "broccoli": [
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/broccoli_001_singlesequence.zip"
+    ],
+    "bowl": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bowl_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bowl_001_singlesequence.zip"
+    ],
+    "bottle": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bottle_001_singlesequence.zip"
+    ],
+    "book": [
+      "https://dl.fbaipublicfiles.com/co3dv2/book_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/book_001_singlesequence.zip"
+    ],
+    "bicycle": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bicycle_001_singlesequence.zip"
+    ],
+    "bench": [
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/bench_001_singlesequence.zip"
+    ],
+    "baseballglove": [
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballglove_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballglove_001_singlesequence.zip"
+    ],
+    "baseballbat": [
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballbat_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/baseballbat_001_singlesequence.zip"
+    ],
+    "banana": [
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/banana_001_singlesequence.zip"
+    ],
+    "ball": [
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/ball_001_singlesequence.zip"
+    ],
+    "backpack": [
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/backpack_001_singlesequence.zip"
+    ],
+    "apple": [
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_000_singlesequence.zip",
+      "https://dl.fbaipublicfiles.com/co3dv2/apple_001_singlesequence.zip"
+    ],
+    "METADATA": [
+      "https://dl.fbaipublicfiles.com/co3dv2/category_to_subset_name_list_singlesequence.json"
+    ]
+  }
 }
