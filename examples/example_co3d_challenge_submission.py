@@ -177,7 +177,7 @@ def make_dbir_submission(
     dataset_root = DATASET_ROOT,
     task = CO3DTask.MANY_VIEW,
     sequence_set = CO3DSequenceSet.DEV,
-    clear_submission_files: bool = False,
+    clear_submission_files: bool = True,
 ):
     # the folder storing all predictions and results of the submission
     submission_output_folder = os.path.join(
@@ -229,6 +229,7 @@ def make_dbir_submission(
             subset_name=subset_name,
         )
 
+
     # Locally evaluate the submission in case we dont evaluate on the hidden test set.
     if not(sequence_set == CO3DSequenceSet.TEST and not ON_SERVER):
         submission.evaluate()
@@ -241,6 +242,12 @@ def make_dbir_submission(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     # iterate over all tasks and sequence sets
-    for sequence_set in [CO3DSequenceSet.TEST, CO3DSequenceSet.DEV]:
-        for task in [CO3DTask.FEW_VIEW, CO3DTask.MANY_VIEW]:
+    # for sequence_set in [CO3DSequenceSet.DEV, CO3DSequenceSet.TEST]:
+    #     for task in [CO3DTask.MANY_VIEW, CO3DTask.FEW_VIEW]:
+    #         make_dbir_submission(task=task, sequence_set=sequence_set)
+
+    # if only a single-sequence dataset is present, only the many-view task
+    # is available
+    for sequence_set in [CO3DSequenceSet.DEV, CO3DSequenceSet.TEST]:
+        for task in [CO3DTask.MANY_VIEW,]:
             make_dbir_submission(task=task, sequence_set=sequence_set)

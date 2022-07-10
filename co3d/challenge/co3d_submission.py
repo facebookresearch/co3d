@@ -334,6 +334,14 @@ class CO3DSubmission:
                 eval_results[(category, subset_name)] = (None, None)
                 eval_exceptions[(category, subset_name)] = exc
 
+            if eval_results[(category, subset_name)][0] is not None:
+                # Print the current subset result
+                eval_result_string = " ".join([
+                    f"{k}={v:.2f}"
+                    for k, v in eval_results[(category, subset_name)][0].items()
+                ])
+                logger.info(f"{category}/{subset_name} result: {eval_result_string}")
+
         # Get the average results.
         average_results = {}
         for m in EVAL_METRIC_NAMES:

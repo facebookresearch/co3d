@@ -44,14 +44,18 @@ def paste_render_to_original_image(
     # size of the render
     render_size = render.image_render.shape[2:]
     # bounding box of the crop in the original image
-    bbox_xywh = frame_data.bbox_xywh[0]
+    bbox_xywh = frame_data.crop_bbox_xywh[0]
     
     # original image size
     orig_size = frame_data.image_size_hw[0].tolist()
-    # scale of the render w.r.t. the original crop
-    render_scale = min(render_size[1] / bbox_xywh[3], render_size[0] / bbox_xywh[2])
-    # valid part of the render
-    render_bounds_wh = (bbox_xywh[2:] * render_scale).round().long()
+
+    # get the valid part of the render
+    render_bounds_wh = [None, None]
+    for axis in [0, 1]:
+        # get the bounds of the mask_crop along dimemsion = 1-axis
+        valid_dim_pix = frame_data.mask_crop[0, 0].sum(dim=axis).reshape(-1).nonzero()
+        assert valid_dim_pix.min()==0
+        render_bounds_wh[axis] = valid_dim_pix.max().item() + 1
 
     render_out = {}
     for render_type, render_val in dataclasses.asdict(render).items():
@@ -59,6 +63,7 @@ def paste_render_to_original_image(
             continue
         # get the valid part of the render
         render_valid_ = render_val[..., :render_bounds_wh[1], :render_bounds_wh[0]]
+        
         # resize the valid part to the original size
         render_resize_ = torch.nn.functional.interpolate(
             render_valid_,
@@ -74,7 +79,7 @@ def paste_render_to_original_image(
             bbox_xywh[0]:(bbox_xywh[0]+render_resize_.shape[3]),
         ] = render_resize_
         render_out[render_type] = render_pasted_
-
+        
     return ImplicitronRender(**render_out)
 
 
@@ -84,16 +89,20 @@ def get_sequence_pointcloud(
     num_workers: int = 12,
     max_loaded_frames: int = 50,
     max_n_points: int = int(3e4),
+    seed: int = 42,
 ) -> Pointclouds:
-    sequence_pointcloud, _ = get_implicitron_sequence_pointcloud(
-        dataset,
-        sequence_name,
-        mask_points=True,
-        max_frames=max_loaded_frames,
-        num_workers=num_workers,
-        load_dataset_point_cloud=False,
-    )
-    return _subsample_pointcloud(sequence_pointcloud, max_n_points)
+    with torch.random.fork_rng():  # fork rng for reproducibility
+        torch.manual_seed(seed)
+        sequence_pointcloud, _ = get_implicitron_sequence_pointcloud(
+            dataset,
+            sequence_name,
+            mask_points=True,
+            max_frames=max_loaded_frames,
+            num_workers=num_workers,
+            load_dataset_point_cloud=False,
+        )
+        sequence_pointcloud = _subsample_pointcloud(sequence_pointcloud, max_n_points)
+    return sequence_pointcloud
 
 
 def get_eval_frame_data_pointcloud(
