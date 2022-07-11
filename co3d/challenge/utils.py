@@ -8,10 +8,11 @@ import os
 import zipfile
 import glob
 import logging
+import multiprocessing
 
 from tqdm import tqdm
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 from .metric_utils import eval_one, EVAL_METRIC_NAMES
 from .io import load_rgbda_frame
@@ -117,7 +118,10 @@ def get_result_directory_file_names(
         msg = "\n".join(
             [f"   {k} missing {str(v)}" for k, v in missing_examples.items()]
         )
-        raise ValueError("Some evaluation examples are incomplete:\n" + msg)
+        raise ValueError(
+            f"Some evaluation examples in {result_dir} are incomplete:\n"
+            + msg
+        )
 
     result_files = {
         example_name: result_type_files["image"][example_name][: -len("_image.png")]
@@ -127,7 +131,15 @@ def get_result_directory_file_names(
     return result_files
 
 
-def evaluate_file_folders(pred_folder: str, gt_folder: str):
+def _evaluate_pred_gt_pair(args: Tuple[str, str, str]):
+    gt_example, gt_file, pred_file = args
+    gt_rgbda = load_rgbda_frame(gt_file, check_for_depth_mask=True)
+    pred_rgbda = load_rgbda_frame(pred_file)
+    check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
+    return eval_one(pred_rgbda, gt_rgbda)
+    
+
+def evaluate_file_folders(pred_folder: str, gt_folder: str, num_workers: int = 0):
     user_submission_files = get_result_directory_file_names(pred_folder)
     ground_truth_files = get_result_directory_file_names(gt_folder, has_depth_masks=True)
 
@@ -140,15 +152,37 @@ def evaluate_file_folders(pred_folder: str, gt_folder: str):
     # At this point we are sure that ground_truth_files contain the same
     # examples as user_submission_files.
 
-    # Iterate over the gt examples:
-    per_example_results = []
-    for gt_example in tqdm(list(ground_truth_files)):
-        gt_rgbda = load_rgbda_frame(ground_truth_files[gt_example], check_for_depth_mask=True)
-        pred_rgbda = load_rgbda_frame(user_submission_files[gt_example])
-        check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
-        per_example_results.append(eval_one(pred_rgbda, gt_rgbda))
-
-
+    if num_workers <= 0:
+        # Iterate over the gt examples:
+        per_example_results = [
+            _evaluate_pred_gt_pair(
+                gt_example,
+                ground_truth_files[gt_example],
+                user_submission_files[gt_example],
+            ) for gt_example in tqdm(list(ground_truth_files))
+        ]    
+        # gt_rgbda = load_rgbda_frame(ground_truth_files[gt_example], check_for_depth_mask=True)
+        # pred_rgbda = load_rgbda_frame(user_submission_files[gt_example])
+        # check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
+        # per_example_results.append(eval_one(pred_rgbda, gt_rgbda))
+    else:
+        # parallel processing
+        arg_list = [
+            (
+                gt_example,
+                ground_truth_files[gt_example],
+                user_submission_files[gt_example],
+            ) for gt_example in list(ground_truth_files)
+        ]
+        pool = multiprocessing.Pool(num_workers)
+        per_example_results = [
+            result for result in tqdm(
+                pool.imap(_evaluate_pred_gt_pair, arg_list),
+                total=len(arg_list),
+            )
+        ]
+        pool.terminate()
+        
     result = {
         metric: (sum(r[metric] for r in per_example_results) / len(per_example_results))
         for metric in EVAL_METRIC_NAMES

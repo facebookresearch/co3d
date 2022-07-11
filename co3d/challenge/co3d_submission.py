@@ -333,6 +333,8 @@ class CO3DSubmission:
             cat_dir = os.path.join(self.submission_cache, category)
             subset_names = os.listdir(cat_dir)
             for subset_name in subset_names:
+                if subset_name.startswith("GT_"):
+                    continue
                 submission_dir = os.path.join(cat_dir, subset_name)
                 submission_files = get_result_directory_file_names(submission_dir)
                 logger.info(
@@ -354,14 +356,23 @@ class CO3DSubmission:
                     )
 
 
-    def evaluate_zip_file(self, zip_path: str):
+    def evaluate_zip_file(self, zip_path: str, num_workers: int = 0):
+        """
+        Extract a zip file with exported results `zip_path` and evaluate.
+        
+        Args:
+            zip_path: A path to the zip file cantaining exported results.
+                Such zip file can be exported using `self.export_results`.
+        """
         os.makedirs(self.submission_cache, exist_ok=True)
+        logger.info(f"Extracting {zip_path} into {self.submission_cache}.")
         shutil.unpack_archive(zip_path, self.submission_cache, "zip")
+        logger.info(f"Filling results from cache {self.submission_cache}.")
         self.fill_results_from_cache()
-        return self.evaluate()
+        return self.evaluate(num_workers=num_workers)
 
 
-    def evaluate(self):
+    def evaluate(self, num_workers: int = 0):
         if self.on_server:
             if not os.path.isdir(self.server_data_folder):
                 raise ValueError(
@@ -379,8 +390,12 @@ class CO3DSubmission:
         eval_exceptions = {}
         eval_results = {}
 
-        for (category, subset_name), eval_batches in eval_batches_map.items():
-            logger.info(f"Evaluating {category}/{subset_name}.")
+        for subset_i, ((category, subset_name), eval_batches) in enumerate(
+            eval_batches_map.items()
+        ):
+            logger.info(
+                f"Evaluating {category}/{subset_name} ({subset_i}/{len(eval_batches_map)})."
+            )
 
             pred_category_subset_dir = CO3DSubmission.get_submission_cache_image_dir(
                 self.submission_cache,
@@ -426,6 +441,7 @@ class CO3DSubmission:
                 eval_results[(category, subset_name)] = evaluate_file_folders(
                     pred_category_subset_dir,
                     gt_category_subset_dir,
+                    num_workers=num_workers,
                 )
             except Exception as exc:
                 logger.warning(f"Evaluation of {category}/{subset_name} failed!", exc_info=True)

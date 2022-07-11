@@ -11,7 +11,7 @@ from typing import Tuple
 from .data_types import RGBDAFrame
 
 
-EVAL_METRIC_NAMES = ["psnr", "psnr_fg", "depth_abs_fg", "iou"]
+EVAL_METRIC_NAMES = ["psnr", "psnr_fg", "depth_abs_fg", "iou", "psnr_full_image"]
 
 
 def eval_one(
@@ -88,6 +88,7 @@ def eval_one_rgbda(
 
     gt_image_rgb_masked = gt_image_rgb * gt_fg_mask
     psnr = calc_psnr(image_rgb, gt_image_rgb_masked)
+    psnr_full_image = calc_psnr(image_rgb, gt_image_rgb)
     psnr_fg = calc_psnr(image_rgb, gt_image_rgb_masked, mask=gt_fg_mask)
     mse_depth, abs_depth = calc_mse_abs_depth(
         depth_map,
@@ -104,6 +105,7 @@ def eval_one_rgbda(
     return {
         "psnr": psnr,
         "psnr_fg": psnr_fg,
+        "psnr_full_image": psnr_full_image,
         "depth_abs_fg": abs_depth,
         "iou": iou,
     }

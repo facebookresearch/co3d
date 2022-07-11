@@ -36,7 +36,7 @@ We also provide a python script that allows downloading all dataset files at onc
 In order to do so, execute the download script:
 
 ```
-python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER
+python ./co3d/download_dataset.py --download_folder DOWNLOAD_FOLDER
 ```
 
 where `DOWNLOAD_FOLDER` is a local target folder for downloading the dataset files.
