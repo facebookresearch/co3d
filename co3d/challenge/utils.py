@@ -156,9 +156,11 @@ def evaluate_file_folders(pred_folder: str, gt_folder: str, num_workers: int = 0
         # Iterate over the gt examples:
         per_example_results = [
             _evaluate_pred_gt_pair(
-                gt_example,
-                ground_truth_files[gt_example],
-                user_submission_files[gt_example],
+                (
+                    gt_example,
+                    ground_truth_files[gt_example],
+                    user_submission_files[gt_example],
+                )
             ) for gt_example in tqdm(list(ground_truth_files))
         ]    
         # gt_rgbda = load_rgbda_frame(ground_truth_files[gt_example], check_for_depth_mask=True)
