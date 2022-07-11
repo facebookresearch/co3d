@@ -19,7 +19,7 @@ from tabulate import tabulate
 
 from co3d.challenge.metric_utils import EVAL_METRIC_NAMES
 
-from .utils import evaluate_file_folders
+from .utils import evaluate_file_folders, get_result_directory_file_names
 from .data_types import RGBDAFrame, CO3DTask, CO3DSequenceSet
 from .io import (
     load_all_eval_batches,
@@ -28,6 +28,38 @@ from .io import (
 
 
 logger = logging.getLogger(__file__)
+
+
+@dataclass
+class CO3DSubmissionRender:
+    """
+    Contains information about a single predicted image.
+
+    category: The name of the category of the prediction.
+    subset_name: The dataset subset of the prediction.
+    frame_number: The number of the corresponding ground truth frame.
+    rgbda_frame: The actual render.
+    """
+    category: str
+    subset_name: str
+    sequence_name: str
+    frame_number: int
+    rgbda_frame: Optional[RGBDAFrame] = None
+
+    def get_image_path(self, root_dir: str):
+        return os.path.join(
+            CO3DSubmission.get_submission_cache_image_dir(
+                root_dir,
+                self.category,
+                self.subset_name,
+            ),
+            self.get_image_name(),
+        )
+
+    def get_image_name(self):
+        return get_submission_image_name(
+            self.category, self.sequence_name, self.frame_number
+        )
 
 
 class CO3DSubmission:
@@ -120,12 +152,11 @@ class CO3DSubmission:
                 The depth map should be of the same size as the corresponding
                 ground truth image.
         """
-        res = CO3DSubmissionRender(
-            category=category,
-            subset_name=subset_name,
-            sequence_name=sequence_name,
-            frame_number=frame_number,
-            rgbda_frame=None,
+        res = self._add_result_metadata(
+            category,
+            subset_name,
+            sequence_name,
+            frame_number,
         )
         res_file = res.get_image_path(self.submission_cache)
         os.makedirs(os.path.dirname(res_file), exist_ok=True)
@@ -134,7 +165,23 @@ class CO3DSubmission:
             RGBDAFrame(image=image, mask=mask, depth=depth),
             res_file,
         )
+
+    def _add_result_metadata(
+        self,
+        category: str,
+        subset_name: str,
+        sequence_name: str,
+        frame_number: int,
+    ) -> CO3DSubmissionRender:
+        res = CO3DSubmissionRender(
+            category=category,
+            subset_name=subset_name,
+            sequence_name=sequence_name,
+            frame_number=frame_number,
+            rgbda_frame=None,
+        )
         self._result_list.append(res)
+        return res
 
     def _get_result_frame_index(self):
         return {(res.sequence_name, res.frame_number): res for res in self._result_list}
@@ -254,11 +301,12 @@ class CO3DSubmission:
         self._clear_gt_links()
 
         # zip the directory
+        logger.info(f"Archiving {self.submission_cache} to {self.submission_archive}.")
         shutil.make_archive(
             base_name=self.submission_archive.replace(".zip", ""),
             format="zip",
             root_dir=self.submission_cache,
-            base_dir=self.submission_cache,
+            base_dir=".",
         )
 
         # finally export the result
@@ -275,9 +323,41 @@ class CO3DSubmission:
             shutil.rmtree(gt_folder)
 
 
+    def fill_results_from_cache(self):
+        """
+        Analyze the results already stored in self.submission_cache and register them
+        with the submission object.
+        """
+        categories = os.listdir(self.submission_cache)
+        for category in categories:
+            cat_dir = os.path.join(self.submission_cache, category)
+            subset_names = os.listdir(cat_dir)
+            for subset_name in subset_names:
+                submission_dir = os.path.join(cat_dir, subset_name)
+                submission_files = get_result_directory_file_names(submission_dir)
+                logger.info(
+                    f"Adding {len(submission_files)} cached results"
+                    f" from {category}/{subset_name}"
+                )
+                for submission_file in submission_files:
+                    category_, sequence_name, frame_number = (
+                        _submision_file_to_category_sequence_name_frame_number(
+                            submission_file
+                        )
+                    )
+                    assert category_==category
+                    self._add_result_metadata(
+                        category,
+                        subset_name,
+                        sequence_name,
+                        frame_number,
+                    )
+
+
     def evaluate_zip_file(self, zip_path: str):
         os.makedirs(self.submission_cache, exist_ok=True)
         shutil.unpack_archive(zip_path, self.submission_cache, "zip")
+        self.fill_results_from_cache()
         return self.evaluate()
 
 
@@ -396,38 +476,6 @@ class CO3DSubmission:
         return eval_results
 
 
-@dataclass
-class CO3DSubmissionRender:
-    """
-    Contains information about a single predicted image.
-
-    category: The name of the category of the prediction.
-    subset_name: The dataset subset of the prediction.
-    frame_number: The number of the corresponding ground truth frame.
-    rgbda_frame: The actual render.
-    """
-    category: str
-    subset_name: str
-    sequence_name: str
-    frame_number: int
-    rgbda_frame: Optional[RGBDAFrame] = None
-
-    def get_image_path(self, root_dir: str):
-        return os.path.join(
-            CO3DSubmission.get_submission_cache_image_dir(
-                root_dir,
-                self.category,
-                self.subset_name,
-            ),
-            self.get_image_name(),
-        )
-
-    def get_image_name(self):
-        return get_submission_image_name(
-            self.category, self.sequence_name, self.frame_number
-        )
-
-
 def get_submission_image_name(category: str, sequence_name: str, frame_number: str):
     return f"{category}_{sequence_name}_{frame_number}"
 
@@ -469,6 +517,14 @@ def _link_eval_batch_data_from_server_db_to_gt_tempdir(
         dst = os.path.join(temp_dir, image_name_postfixed)
         logger.debug(f"{src}<---{dst}")
         _symlink_force(src, dst)
+
+
+def _submision_file_to_category_sequence_name_frame_number(file: str):
+    toks = os.path.split(file)[-1].split("_")
+    category = toks[0]
+    frame_number = int(toks[-1])
+    sequence_name = "_".join(toks[1:-1])
+    return category, sequence_name, frame_number
 
 
 def _symlink_force(target, link_name):

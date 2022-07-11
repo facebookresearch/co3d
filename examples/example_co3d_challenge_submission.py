@@ -21,7 +21,6 @@ from pytorch3d.implicitron.dataset.json_index_dataset_map_provider_v2 import (
 from pytorch3d.implicitron.tools.config import expand_args_fields
 
 from co3d.utils import dbir_utils
-from co3d.challenge.io import get_category_to_subset_name_list
 from co3d.challenge.co3d_submission import CO3DSubmission
 from co3d.challenge.data_types import CO3DTask, CO3DSequenceSet
 from co3d.dataset.utils import redact_eval_frame_data, _check_valid_eval_frame_data
@@ -178,7 +177,7 @@ def make_dbir_submission(
     dataset_root = DATASET_ROOT,
     task = CO3DTask.MANY_VIEW,
     sequence_set = CO3DSequenceSet.DEV,
-    clear_submission_files: bool = True,
+    clear_submission_files: bool = False,
 ):
     # the folder storing all predictions and results of the submission
     submission_output_folder = os.path.join(
@@ -253,7 +252,7 @@ if __name__ == "__main__":
 
     # iterate over all tasks and sequence sets
     for sequence_set in [CO3DSequenceSet.DEV, CO3DSequenceSet.TEST]:
-        for task in [CO3DTask.FEW_VIEW, CO3DTask.MANY_VIEW]:
+        for task in [CO3DTask.MANY_VIEW, CO3DTask.FEW_VIEW]:
             make_dbir_submission(task=task, sequence_set=sequence_set)
 
 
