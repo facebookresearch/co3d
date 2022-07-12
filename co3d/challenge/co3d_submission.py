@@ -374,7 +374,13 @@ class CO3DSubmission:
 
     def evaluate(self, num_workers: int = 0):
         if self.on_server:
-            if not os.path.isdir(self.server_data_folder):
+            if (
+                os.path.isfile(self.server_data_folder)
+                and self.server_data_folder.endswith(".hdf5")
+            ):
+                # this is ok, we allow hdf5 files here
+                pass
+            elif not os.path.isdir(self.server_data_folder):
                 raise ValueError(
                     "For evaluation on the server server_data_folder has to be specified."
                 )
@@ -529,10 +535,18 @@ def _link_eval_batch_data_from_server_db_to_gt_tempdir(
     os.makedirs(temp_dir, exist_ok=True)
     for data_type in ["image", "depth", "mask", "depth_mask"]:
         image_name_postfixed = image_name + f"_{data_type}.png"
-        src = os.path.join(server_folder, image_name_postfixed)
         dst = os.path.join(temp_dir, image_name_postfixed)
-        logger.debug(f"{src}<---{dst}")
-        _symlink_force(src, dst)
+        if server_folder.endswith(".hdf5"):
+            # the folder is in fact an hdf5 file
+            # so we just write the path to the hdf5 file
+            # and read from it later
+            logger.debug(f"{dst}<---HDF5 file path: {server_folder}")
+            with open(dst, "w") as f:
+                f.write("__HDF5__:"+os.path.abspath(server_folder))
+        else:
+            src = os.path.join(server_folder, image_name_postfixed)
+            logger.debug(f"{src}<---{dst}")
+            _symlink_force(src, dst)
 
 
 def _submision_file_to_category_sequence_name_frame_number(file: str):

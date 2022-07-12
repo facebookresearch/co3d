@@ -12,7 +12,8 @@ import torchvision
 
 from visdom import Visdom
 
-_CO3D_DATASET_ROOT: str = os.getenv("CO3DV2_DATASET_ROOT", "")
+_CO3DV2_DATASET_ROOT: str = os.getenv("CO3DV2_DATASET_ROOT", "")
+# _CO3DV2_DATASET_ROOT: str = os.getenv("CO3D_DATASET_ROOT", "")
 
 
 from pytorch3d.implicitron.tools.point_cloud_utils import render_point_cloud_pytorch3d
@@ -26,7 +27,7 @@ class TestDatasetVisualize(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42)
         category = "skateboard"
-        dataset_root = _CO3D_DATASET_ROOT
+        dataset_root = _CO3DV2_DATASET_ROOT
         frame_file = os.path.join(dataset_root, category, "frame_annotations.jgz")
         sequence_file = os.path.join(dataset_root, category, "sequence_annotations.jgz")
         self.image_size = 256
@@ -59,6 +60,15 @@ class TestDatasetVisualize(unittest.TestCase):
                 box_crop=False,
                 load_point_clouds=True,
             ),
+            "nocrop2": JsonIndexDataset(
+                frame_annotations_file=frame_file,
+                sequence_annotations_file=sequence_file,
+                dataset_root=dataset_root,
+                image_height=self.image_size // 2,
+                image_width=self.image_size,
+                box_crop=False,
+                load_point_clouds=True,
+            ),
         }
         self.visdom = Visdom()
         if not self.visdom.check_connection():
@@ -79,12 +89,33 @@ class TestDatasetVisualize(unittest.TestCase):
 
     def test_one(self):
         """Test dataset visualisation."""
+        point_clouds = {}
         for max_frames in (16,):
             for load_dataset_point_cloud in (True, False):
                 for dataset_key in self.datasets:
-                    self._gen_and_render_pointcloud(
+                    point_cloud, cameras = self._gen_and_render_pointcloud(
                         max_frames, load_dataset_point_cloud, dataset_key
                     )
+                    test_name = f"{max_frames}_{load_dataset_point_cloud}_{dataset_key}"
+                    point_clouds[test_name] = point_cloud
+
+        if self.visdom is not None:
+            plotlyplot = plot_scene(
+                {
+                    "point_clouds": {
+                        "cameras": cameras,
+                        **point_clouds,
+                    }
+                },
+                camera_scale=1.0,
+                pointcloud_max_points=10000,
+                pointcloud_marker_size=1.0,
+            )
+            self.visdom.plotlyplot(
+                plotlyplot,
+                env="test_dataset_visualize",
+                win=f"pcl",
+            )
 
     def _gen_and_render_pointcloud(
         self, max_frames, load_dataset_point_cloud, dataset_key
@@ -147,23 +178,9 @@ class TestDatasetVisualize(unittest.TestCase):
                 win=f"pcl_renders_{test_name}",
                 opts={"title": f"pcl_renders_{test_name}"},
             )
-            plotlyplot = plot_scene(
-                {
-                    "scene_batch": {
-                        "cameras": cameras,
-                        "point_cloud": point_cloud,
-                    }
-                },
-                camera_scale=1.0,
-                pointcloud_max_points=10000,
-                pointcloud_marker_size=1.0,
-            )
-            self.visdom.plotlyplot(
-                plotlyplot,
-                env="test_dataset_visualize",
-                win=f"pcl_{test_name}",
-            )
 
+        return point_cloud, cameras
+        
 
 if __name__ == "__main__":
     unittest.main()

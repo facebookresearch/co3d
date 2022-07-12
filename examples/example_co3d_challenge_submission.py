@@ -25,10 +25,13 @@ from co3d.challenge.co3d_submission import CO3DSubmission
 from co3d.challenge.data_types import CO3DTask, CO3DSequenceSet
 from co3d.dataset.utils import redact_eval_frame_data, _check_valid_eval_frame_data
 
+
 DATASET_ROOT = os.getenv("CO3DV2_DATASET_ROOT")
-DATASET_ROOT_HIDDEN = os.path.join(DATASET_ROOT, "_hidden", "hidden")
-DATASET_ROOT_HIDDEN_KNOWN = os.path.join(DATASET_ROOT, "_hidden", "known")
-ON_SERVER = False
+# DATASET_ROOT_HIDDEN = os.path.join(DATASET_ROOT, "_hidden", "hidden")
+# ON_SERVER = False
+
+DATASET_ROOT_HIDDEN = os.path.join("/large_experiments/p3/replay/datasets/co3d/co3d45k_220512/export_v20", "_hidden.hdf5")
+ON_SERVER = True
 
 
 logger = logging.getLogger(__name__)
@@ -247,15 +250,15 @@ def make_dbir_submission(
     submission.export_results(validate_results=True)
 
     # sanity check - reevaluate the zip file and copare results
-    submission_reeval = CO3DSubmission(
-        task=task,
-        sequence_set=sequence_set,
-        output_folder=os.path.join(submission_output_folder, "_reeval"),
-        dataset_root=DATASET_ROOT,
-        on_server=True,
-        server_data_folder=DATASET_ROOT_HIDDEN,
-    )
-    submission_reeval.evaluate_zip_file(submission.submission_archive)
+    # submission_reeval = CO3DSubmission(
+    #     task=task,
+    #     sequence_set=sequence_set,
+    #     output_folder=os.path.join(submission_output_folder, "_reeval"),
+    #     dataset_root=DATASET_ROOT,
+    #     on_server=True,
+    #     server_data_folder=DATASET_ROOT_HIDDEN,
+    # )
+    # submission_reeval.evaluate_zip_file(submission.submission_archive, num_workers=num_eval_workers)
 
 
 if __name__ == "__main__":
@@ -267,92 +270,47 @@ if __name__ == "__main__":
             make_dbir_submission(task=task, sequence_set=sequence_set)
 
 
-# CO3D challenge results
-# Category    Subset name        psnr    psnr_fg    depth_abs_fg       iou
-# ----------  --------------  -------  ---------  --------------  --------
-# vase        manyview_dev_0  24.7188    17.0456        0.750426  0.797131
-# vase        manyview_dev_1  25.0695    18.4118        0.633954  0.800592
-# toytruck    manyview_dev_0  22.5549    15.0314        0.909745  0.708762
-# toytruck    manyview_dev_1  17.51      12.0589        0.928104  0.688089
-# toytrain    manyview_dev_0  20.5487    15.2528        0.777094  0.731648
-# toytrain    manyview_dev_1  25.2285    17.6799        0.95936   0.643873
-# toaster     manyview_dev_0  21.578     13.7402        0.665852  0.696084
-# toaster     manyview_dev_1  18.3078    12.1653        0.871723  0.693956
-# teddybear   manyview_dev_0  23.7967    16.5354        0.460334  0.838103
-# teddybear   manyview_dev_1  23.7718    18.0498        0.973132  0.726019
-# suitcase    manyview_dev_0  23.0181    17.0669        1.39468   0.787117
-# suitcase    manyview_dev_1  27.9742    18.7447        0.83167   0.759975
-# skateboard  manyview_dev_0  17.0379    12.0626        0.88807   0.699728
-# skateboard  manyview_dev_1  18.0029    14.911         1.30745   0.647891
-# remote      manyview_dev_0  19.0747    10.8591        0.54138   0.780551
-# remote      manyview_dev_1  18.707     12.7299        0.789577  0.708073
-# plant       manyview_dev_0  20.3458    15.7513        0.786387  0.665394
-# plant       manyview_dev_1  21.2544    15.9596        1.15135   0.616215
-# orange      manyview_dev_0  22.1965    13.901         1.42191   0.767037
-# orange      manyview_dev_1  21.1569    11.9308        1.09544   0.673262
-# mouse       manyview_dev_0  23.5896    14.9893        0.834395  0.729335
-# mouse       manyview_dev_1  22.2867    15.1618        0.666281  0.678549
-# hydrant     manyview_dev_0  22.4799    16.9655        0.545597  0.836734
-# hydrant     manyview_dev_1  22.9273    16.0069        0.558497  0.825344
-# donut       manyview_dev_0  23.4415    14.8969        0.797778  0.72526
-# donut       manyview_dev_1  29.782     18.2328        0.624935  0.795212
-# cake        manyview_dev_0  22.7506    14.522         0.661419  0.783267
-# cake        manyview_dev_1  25.3902    20.5686        1.07715   0.763787
-# broccoli    manyview_dev_0  25.3132    16.0099        0.947191  0.692499
-# broccoli    manyview_dev_1  26.19      16.1295        0.76257   0.777639
-# bowl        manyview_dev_0  25.7727    15.2469        0.452283  0.810967
-# bowl        manyview_dev_1  17.9696    13.8592        0.979186  0.723606
-# book        manyview_dev_0  22.3838    14.7637        0.545505  0.806584
-# book        manyview_dev_1  19.5617    12.1536        0.684921  0.833463
-# bench       manyview_dev_0  19.2668    18.3066        0.504531  0.723418
-# bench       manyview_dev_1  17.4578    13.0467        0.702295  0.716847
-# ball        manyview_dev_0  20.1323    12.7333        0.904389  0.66537
-# ball        manyview_dev_1  15.7553    11.0936        1.27253   0.61227
-# apple       manyview_dev_0  25.3796    15.8355        0.8537    0.745961
-# apple       manyview_dev_1  21.1       14.771         0.992911  0.738451
-# MEAN        -               22.0196    15.1295        0.837643  0.735352
-
-
+# CO3D challenge results for DBIR
 # Category    Subset name        psnr    psnr_fg    depth_abs_fg       iou    psnr_full_image
 # ----------  --------------  -------  ---------  --------------  --------  -----------------
-# vase        manyview_dev_0  24.7188    17.0456        0.750426  0.797131            3.50081
-# vase        manyview_dev_1  25.0695    18.4118        0.633954  0.800592            6.41699
-# toytruck    manyview_dev_0  22.5549    15.0314        0.909745  0.708762            4.99781
-# toytruck    manyview_dev_1  17.51      12.0589        0.928104  0.688089            7.80806
-# toytrain    manyview_dev_0  20.5487    15.2528        0.777094  0.731648            8.00421
-# toytrain    manyview_dev_1  25.2285    17.6799        0.95936   0.643873            9.19275
-# toaster     manyview_dev_0  21.578     13.7402        0.665852  0.696084            6.15986
-# toaster     manyview_dev_1  18.3078    12.1653        0.871723  0.693956            6.80434
-# teddybear   manyview_dev_0  23.7967    16.5354        0.460334  0.838103            5.63069
-# teddybear   manyview_dev_1  23.7718    18.0498        0.973132  0.726019            5.58213
-# suitcase    manyview_dev_0  23.0181    17.0669        1.39468   0.787117            6.67624
-# suitcase    manyview_dev_1  27.9742    18.7447        0.83167   0.759975            5.53953
-# skateboard  manyview_dev_0  17.0379    12.0626        0.88807   0.699728            8.6203
-# skateboard  manyview_dev_1  18.0029    14.911         1.30745   0.647891            7.31757
-# remote      manyview_dev_0  19.0747    10.8591        0.54138   0.780551            6.89078
-# remote      manyview_dev_1  18.707     12.7299        0.789577  0.708073            4.34828
-# plant       manyview_dev_0  20.3458    15.7513        0.786387  0.665394            7.40235
-# plant       manyview_dev_1  21.2544    15.9596        1.15135   0.616215            9.42299
-# orange      manyview_dev_0  22.1965    13.901         1.42191   0.767037            6.29999
-# orange      manyview_dev_1  21.1569    11.9308        1.09544   0.673262            6.25906
-# mouse       manyview_dev_0  23.5896    14.9893        0.834395  0.729335            6.09629
-# mouse       manyview_dev_1  22.2867    15.1618        0.666281  0.678549            7.38962
-# hydrant     manyview_dev_0  22.4799    16.9655        0.545597  0.836734            5.85919
-# hydrant     manyview_dev_1  22.9273    16.0069        0.558497  0.825344            5.04459
-# donut       manyview_dev_0  23.4415    14.8969        0.797778  0.72526             4.06814
-# donut       manyview_dev_1  29.782     18.2328        0.624935  0.795212            4.27905
-# cake        manyview_dev_0  22.7506    14.522         0.661419  0.783267            6.25355
-# cake        manyview_dev_1  25.3902    20.5686        1.07715   0.763787            3.99719
-# broccoli    manyview_dev_0  25.3132    16.0099        0.947191  0.692499            6.78466
-# broccoli    manyview_dev_1  26.19      16.1295        0.76257   0.777639            4.81145
-# bowl        manyview_dev_0  25.7727    15.2469        0.452283  0.810967            5.87919
-# bowl        manyview_dev_1  17.9696    13.8592        0.979186  0.723606            7.25215
-# book        manyview_dev_0  22.3838    14.7637        0.545505  0.806584            6.65789
-# book        manyview_dev_1  19.5617    12.1536        0.684921  0.833463            7.18136
-# bench       manyview_dev_0  19.2668    18.3066        0.504531  0.723418            4.45801
-# bench       manyview_dev_1  17.4578    13.0467        0.702295  0.716847            5.13987
-# ball        manyview_dev_0  20.1323    12.7333        0.904389  0.66537             5.96311
-# ball        manyview_dev_1  15.7553    11.0936        1.27253   0.61227             3.14961
-# apple       manyview_dev_0  25.3796    15.8355        0.8537    0.745961            4.46496
-# apple       manyview_dev_1  21.1       14.771         0.992911  0.738451            6.90396
-# MEAN        -               22.0196    15.1295        0.837643  0.735352            6.11271
+# vase        manyview_dev_0  24.9622    17.2103        0.737651  0.802907            3.49721
+# vase        manyview_dev_1  25.3102    18.44          0.59692   0.809792            6.40918
+# toytruck    manyview_dev_0  23.7732    15.5102        0.861064  0.741494            4.99226
+# toytruck    manyview_dev_1  20.2278    13.6948        0.690828  0.754487            7.87978
+# toytrain    manyview_dev_0  21.8014    15.9132        0.660723  0.755107            7.98991
+# toytrain    manyview_dev_1  25.8508    18.4285        0.951778  0.646153            9.20359
+# toaster     manyview_dev_0  21.7936    13.891         0.648372  0.694767            6.15618
+# toaster     manyview_dev_1  18.477     12.1587        0.825844  0.703912            6.79456
+# teddybear   manyview_dev_0  23.7997    16.5381        0.46086   0.837897            5.63064
+# teddybear   manyview_dev_1  26.1378    19.8502        0.882306  0.756235            5.56647                                                                                                        
+# suitcase    manyview_dev_0  24.2254    17.5158        1.13533   0.809919            6.65941
+# suitcase    manyview_dev_1  27.9944    18.7613        0.83145   0.759948            5.5394
+# skateboard  manyview_dev_0  21.6529    15.3298        0.499439  0.814291            8.77353
+# skateboard  manyview_dev_1  25.9824    19.8798        0.624538  0.844691            7.25049
+# remote      manyview_dev_0  19.1542    10.9486        0.526491  0.781712            6.8934                                                                                                         
+# remote      manyview_dev_1  20.2204    13.3           0.583544  0.763237            4.28249
+# plant       manyview_dev_0  21.5417    16.5396        0.684964  0.711299            7.32539
+# plant       manyview_dev_1  23.2408    17.1425        0.970093  0.708852            9.37529
+# orange      manyview_dev_0  22.3462    13.9155        1.38631   0.778507            6.29187
+# orange      manyview_dev_1  21.1582    11.9294        1.08968   0.673347            6.25896                                                                                                        
+# mouse       manyview_dev_0  23.7059    15.0934        0.786687  0.745071            6.09387
+# mouse       manyview_dev_1  23.4661    15.864         0.611     0.701353            7.37148
+# hydrant     manyview_dev_0  23.3411    17.3916        0.516439  0.849561            5.859
+# hydrant     manyview_dev_1  23.2579    16.2956        0.526429  0.836342            5.04959
+# donut       manyview_dev_0  27.1901    17.9711        0.793923  0.775221            4.05381                                                                                                        
+# donut       manyview_dev_1  29.7891    18.2375        0.624767  0.795361            4.27906
+# cake        manyview_dev_0  23.1432    14.8656        0.649352  0.789436            6.26039
+# cake        manyview_dev_1  26.9312    20.6573        0.719103  0.865847            3.9428
+# broccoli    manyview_dev_0  25.5412    16.1942        0.933724  0.698763            6.78183
+# broccoli    manyview_dev_1  26.2196    16.1596        0.762279  0.77777             4.81169                                                                                                        
+# bowl        manyview_dev_0  25.7917    15.2551        0.452199  0.810974            5.87917
+# bowl        manyview_dev_1  19.1636    14.4302        0.872776  0.776362            7.19918
+# book        manyview_dev_0  22.3768    14.7519        0.54043   0.807283            6.6576
+# book        manyview_dev_1  19.5715    12.1604        0.684169  0.833521            7.1818
+# bench       manyview_dev_0  24.2136    19.4035        0.376075  0.831789            4.35312                                                                                                        
+# bench       manyview_dev_1  19.781     13.959         0.607774  0.773409            5.0657
+# ball        manyview_dev_0  20.7418    12.8557        0.876389  0.678307            5.96079
+# ball        manyview_dev_1  18.5385    12.2345        1.15568   0.716587            3.00818
+# apple       manyview_dev_0  25.3867    15.8412        0.852304  0.746271            4.46503
+# apple       manyview_dev_1  21.9403    15.1499        0.952164  0.756788            6.89821                                                                                                        
+# MEAN        -               23.2435    15.7917        0.748546  0.767864            6.09856

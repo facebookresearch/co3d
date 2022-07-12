@@ -9,13 +9,21 @@ import os
 import json
 import logging
 import numpy as np
+import functools
+from io import BytesIO
 from PIL import Image
 from typing import Optional
 
 from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 
 
-logging.getLogger(__file__)
+logger = logging.getLogger(__file__)
+
+
+try:
+    import h5py
+except ImportError:
+    logger.debug("No h5py library - make sure not to evaluate on a server.")
 
 
 def store_rgbda_frame(rgbda_frame: RGBDAFrame, fl: str):
@@ -47,13 +55,13 @@ def store_1bit_png_mask(mask: np.ndarray, fl: str):
 
 
 def load_1bit_png_mask(file: str) -> np.ndarray:
-    with Image.open(file) as pil_im:
+    with Image.open(_handle_h5py_file(file)) as pil_im:
         mask = (np.array(pil_im.convert("L")) > 0.0).astype(np.float32)
     return mask
 
 
 def load_mask(fl: str):
-    return np.array(Image.open(fl)).astype(np.float32) / 255.0
+    return np.array(Image.open(_handle_h5py_file(fl))).astype(np.float32) / 255.0
 
 
 def store_mask(mask: np.ndarray, fl: str, mode: str = "L"):
@@ -73,7 +81,7 @@ def store_mask(mask: np.ndarray, fl: str, mode: str = "L"):
 
 
 def load_depth(fl: str):
-    depth_pil = Image.open(fl)
+    depth_pil = Image.open(_handle_h5py_file(fl))
     depth = (
         np.frombuffer(np.array(depth_pil, dtype=np.uint16), dtype=np.float16)
         .astype(np.float32)
@@ -92,12 +100,45 @@ def store_depth(depth: np.ndarray, fl: str):
 
 
 def load_image(fl: str):
-    return np.array(Image.open(fl)).astype(np.float32).transpose(2, 0, 1) / 255.0
+    return np.array(Image.open(_handle_h5py_file(fl))).astype(np.float32).transpose(2, 0, 1) / 255.0
 
 
 def store_image(image: np.ndarray, fl: str):
     assert image.ndim == 3
     Image.fromarray((image.transpose(1, 2, 0) * 255.0).astype(np.uint8)).save(fl)
+
+
+def _handle_h5py_file(fl: str, hdf5_token: str="__HDF5__:"):
+    """
+    In case `fl` is a unicode text file starting with `hdf5_token`, 
+    the file `fl` contains a string with a path to the .hdf5 file that holds the actual
+    file binary data.
+    
+    This function makes sure that either the filepath is returned if `fl`
+    does not contain hdf5-file-path, otherwise returns the BytesIO object with
+    the `fl`s binary data.
+    """
+    with open(fl, "rb") as f:
+        first_bytes = f.read(len(hdf5_token))
+        try:
+            first_bytes_decoded = first_bytes.decode()
+        except UnicodeDecodeError:
+            return fl
+        if first_bytes_decoded != hdf5_token:
+            return fl
+    with open(fl, "r") as f:
+        h5path = f.readlines()[0]
+    assert h5path.startswith(hdf5_token)
+    h5path_clean = h5path[len(hdf5_token):]
+    return _get_image_data_from_h5(h5path_clean, fl)
+
+
+def _get_image_data_from_h5(h5path: str, fl: str):
+    with h5py.File(h5path, "r") as f:
+        flname = os.path.split(fl)[-1]
+        idx = f["binary_data"].attrs[flname]
+        bin_data = f["binary_data"][idx]
+    return BytesIO(bin_data)
 
 
 def get_category_to_subset_name_list(
