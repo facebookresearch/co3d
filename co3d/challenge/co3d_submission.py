@@ -331,6 +331,8 @@ class CO3DSubmission:
         categories = os.listdir(self.submission_cache)
         for category in categories:
             cat_dir = os.path.join(self.submission_cache, category)
+            if not os.path.isdir(cat_dir):
+                continue
             subset_names = os.listdir(cat_dir)
             for subset_name in subset_names:
                 if subset_name.startswith("GT_"):
