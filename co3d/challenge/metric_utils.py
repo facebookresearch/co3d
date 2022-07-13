@@ -13,6 +13,13 @@ from .data_types import RGBDAFrame
 
 
 EVAL_METRIC_NAMES = ["psnr_masked", "psnr_fg", "psnr_full_image", "depth_abs_fg", "iou"]
+EVAL_METRIC_MISSING_VALUE = {
+    "psnr_masked": 0.0,
+    "psnr_fg": 0.0,
+    "psnr_full_image": 0.0,
+    "depth_abs_fg": 100000.0,
+    "iou": 0.0,
+}
 
 
 logger = logging.getLogger(__file__)

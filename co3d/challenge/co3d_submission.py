@@ -11,13 +11,14 @@ import logging
 import errno
 import pickle
 import glob
+from tabulate import tabulate
 
 from typing import Optional, Tuple
 from dataclasses import dataclass
 import numpy as np
 import csv
 
-from co3d.challenge.metric_utils import EVAL_METRIC_NAMES
+from co3d.challenge.metric_utils import EVAL_METRIC_NAMES, EVAL_METRIC_MISSING_VALUE
 
 from .utils import evaluate_file_folders, get_result_directory_file_names
 from .data_types import RGBDAFrame, CO3DTask, CO3DSequenceSet
@@ -479,9 +480,9 @@ class CO3DSubmission:
         # Get the average results.
         average_results = {}
         for m in EVAL_METRIC_NAMES:
-            # Automatically generates NaN average if some results are missing.
             average_results[m] = sum(
-                eval_result[m] if eval_result is not None else float("NaN")
+                eval_result[m] 
+                if eval_result is not None else _get_missing_metric_val(m)
                 for eval_result, _ in eval_results.values()
             ) / len(eval_results)
         eval_results[("MEAN", "-")] = average_results, None
@@ -491,20 +492,16 @@ class CO3DSubmission:
         for (category, subset_name), (eval_result, _) in eval_results.items():
             tab_row = [category, subset_name]
             if eval_result is None:
-                tab_row.extend([float("NaN")] * len(EVAL_METRIC_NAMES))
+                tab_row.extend([_get_missing_metric_val(m) for m in EVAL_METRIC_NAMES])
             else:
                 tab_row.extend([eval_result[k] for k in EVAL_METRIC_NAMES])
             tab_rows.append(tab_row)
 
-        try:  # try to export with tabulate
-            from tabulate import tabulate
-            table_str = tabulate(
-                tab_rows, headers=["Category", "Subset name", *EVAL_METRIC_NAMES]
-            )
-            logger.info("\n"+table_str)
-        except ModuleNotFoundError:
-            pass
-        
+        table_str = tabulate(
+            tab_rows, headers=["Category", "Subset name", *EVAL_METRIC_NAMES]
+        )
+        logger.info("\n"+table_str)
+    
         # Store the human-readable table
         table_txt_file = os.path.join(self.output_folder, "results.csv")
         logger.info(f"Dumping the results table to {table_txt_file}.")
@@ -519,6 +516,10 @@ class CO3DSubmission:
             pickle.dump(eval_exceptions, f)
 
         return eval_results
+
+
+def _get_missing_metric_val(m: str):
+    return EVAL_METRIC_MISSING_VALUE[m]
 
 
 def get_submission_image_name(category: str, sequence_name: str, frame_number: str):

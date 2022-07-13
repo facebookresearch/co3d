@@ -300,6 +300,7 @@ if __name__ == "__main__":
                 cheat_with_gt_data=True,
                 evaluate_only=True,
             )
+            
             # make_dbir_submission(task=task, sequence_set=sequence_set)
 
 
