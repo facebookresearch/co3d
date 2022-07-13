@@ -9,10 +9,11 @@ import os
 import json
 import logging
 import numpy as np
+import dbm
 import functools
 from io import BytesIO
 from PIL import Image
-from typing import Optional
+from typing import Optional, Callable
 
 from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 
@@ -27,6 +28,7 @@ except ImportError:
 
 
 def store_rgbda_frame(rgbda_frame: RGBDAFrame, fl: str):
+    assert np.isfinite(rgbda_frame.depth).all()
     store_mask(rgbda_frame.mask[0], fl + "_mask.png")
     store_depth(rgbda_frame.depth[0], fl + "_depth.png")
     store_image(rgbda_frame.image, fl + "_image.png")
@@ -40,6 +42,8 @@ def load_rgbda_frame(fl: str, check_for_depth_mask: bool = False) -> RGBDAFrame:
         depth=load_depth(os.path.realpath(fl + "_depth.png"))[None],
         image=load_image(os.path.realpath(fl + "_image.png")),
     )
+    if not np.isfinite(f.depth).all():
+        f.depth[~np.isfinite(f.depth)] = 0.0  # chuck the infs in depth
     if check_for_depth_mask:
         depth_mask_path = fl + "_depth_mask.png"
         if os.path.isfile(depth_mask_path):
@@ -55,13 +59,13 @@ def store_1bit_png_mask(mask: np.ndarray, fl: str):
 
 
 def load_1bit_png_mask(file: str) -> np.ndarray:
-    with Image.open(_handle_h5py_file(file)) as pil_im:
+    with Image.open(_handle_db_file(file)) as pil_im:
         mask = (np.array(pil_im.convert("L")) > 0.0).astype(np.float32)
     return mask
 
 
 def load_mask(fl: str):
-    return np.array(Image.open(_handle_h5py_file(fl))).astype(np.float32) / 255.0
+    return np.array(Image.open(_handle_db_file(fl))).astype(np.float32) / 255.0
 
 
 def store_mask(mask: np.ndarray, fl: str, mode: str = "L"):
@@ -81,7 +85,7 @@ def store_mask(mask: np.ndarray, fl: str, mode: str = "L"):
 
 
 def load_depth(fl: str):
-    depth_pil = Image.open(_handle_h5py_file(fl))
+    depth_pil = Image.open(_handle_db_file(fl))
     depth = (
         np.frombuffer(np.array(depth_pil, dtype=np.uint16), dtype=np.float16)
         .astype(np.float32)
@@ -100,7 +104,7 @@ def store_depth(depth: np.ndarray, fl: str):
 
 
 def load_image(fl: str):
-    return np.array(Image.open(_handle_h5py_file(fl))).astype(np.float32).transpose(2, 0, 1) / 255.0
+    return np.array(Image.open(_handle_db_file(fl))).astype(np.float32).transpose(2, 0, 1) / 255.0
 
 
 def store_image(image: np.ndarray, fl: str):
@@ -108,29 +112,59 @@ def store_image(image: np.ndarray, fl: str):
     Image.fromarray((image.transpose(1, 2, 0) * 255.0).astype(np.uint8)).save(fl)
 
 
-def _handle_h5py_file(fl: str, hdf5_token: str="__HDF5__:"):
+def _handle_db_file(fl: str):
+    for token, data_load_fun in (
+        ("__DBM__:", _get_image_data_from_dbm),
+        ("__HDF5__:", _get_image_data_from_h5),
+    ):
+        fl = _maybe_get_db_image_data_bytes_io_from_file(fl, token, data_load_fun)
+        if not isinstance(fl, str):
+            # logger.info(f"{fl} is {token}!")
+            break
+    return fl
+
+
+def _maybe_get_db_image_data_bytes_io_from_file(
+    fl: str,
+    token: str,
+    data_load_fun: Callable,
+):
     """
-    In case `fl` is a unicode text file starting with `hdf5_token`, 
-    the file `fl` contains a string with a path to the .hdf5 file that holds the actual
+    In case `fl` is a unicode text file starting with `token`, 
+    the file `fl` contains a string with a path to a database file that holds the actual
     file binary data.
     
     This function makes sure that either the filepath is returned if `fl`
-    does not contain hdf5-file-path, otherwise returns the BytesIO object with
+    does not contain database-file-path, otherwise returns the BytesIO object with
     the `fl`s binary data.
     """
     with open(fl, "rb") as f:
-        first_bytes = f.read(len(hdf5_token))
+        first_bytes = f.read(len(token))
         try:
             first_bytes_decoded = first_bytes.decode()
         except UnicodeDecodeError:
             return fl
-        if first_bytes_decoded != hdf5_token:
+        if first_bytes_decoded != token:
             return fl
     with open(fl, "r") as f:
-        h5path = f.readlines()[0]
-    assert h5path.startswith(hdf5_token)
-    h5path_clean = h5path[len(hdf5_token):]
-    return _get_image_data_from_h5(h5path_clean, fl)
+        db_path = f.readlines()[0]
+    assert db_path.startswith(token)
+    db_path_clean = db_path[len(token):]
+    return data_load_fun(db_path_clean, fl)
+
+
+@functools.lru_cache(maxsize=1)
+def _cached_dbm_open_for_read(dbmpath: str):
+    db = dbm.open(dbmpath, "r")
+    return db
+
+
+def _get_image_data_from_dbm(dbmpath: str, fl: str):
+    flname = os.path.split(fl)[-1]
+    db = _cached_dbm_open_for_read(dbmpath)
+    # with dbm.open(dbmpath, "r") as db:
+    bin_data = db[flname]
+    return BytesIO(bin_data)
 
 
 def _get_image_data_from_h5(h5path: str, fl: str):

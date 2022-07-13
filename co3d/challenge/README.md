@@ -1,9 +1,3 @@
-<style>
-r { color: Red }
-o { color: Orange }
-g { color: Green }
-</style>
-
 Common Objects in 3D Challenge
 ==============================
 
@@ -14,19 +8,20 @@ See example code for creating a CO3DC submission in:
 ```
 <co3d_repository_root>/examples/example_co3d_challenge_submission.py
 ```
-note that the codebase also requires the latest PyTorch3D installation.
+Note that the codebase also requires the latest PyTorch3D installation.
 
 After running the evaluation code, please send the produced .zip file to the
 EvalAI evaluation server:
-!!!! TODO !!!!
+
+[===> CO3D challenge submission page  <===](https://eval.ai/web/challenges/challenge-page/1819/submission)
 
 
 # CO3D challenge overview
 
 CO3D challenge evaluates New-view Synthesis methods.
 
-More specifically, <b>given a set of known "<o>source</o>" views of an object, the goal
-is to generate new, previously unobserved, "<g>target</g>" views of the scene</b>.
+More specifically, <b>given a set of known "source" views of an object, the goal
+is to generate new, previously unobserved, "target" views of the scene</b>.
 
 The challenge has 2 tracks - _Many-view_, and _Few-view_.
 
@@ -49,10 +44,10 @@ The CO3Dv2 dataset provides all training and testing data needed for a submissio
 
 ### Evaluation data
 
-Each evaluation example contains several <o>source</o> views and a single
-<g>target</g> view. For each <o>source view</o>, the corresponding color image,
+Each evaluation example contains several source views and a single
+target view. For each source view, the corresponding color image,
 foreground segmentation mask, and camera parameters are given.
-Given this information, the goal is to generate the <g>target</g> view, for which only the
+Given this information, the goal is to generate the target view, for which only the
 camera parameters are given.
 
 
@@ -63,11 +58,11 @@ of challenge entries.
 
 ## Submission guide
 1) Install the `co3d` package:
-```
-git clone https://github.com/facebookresearch/co3d
-cd co3d
-pip install -e .
-```
+    ```
+    git clone https://github.com/facebookresearch/co3d
+    cd co3d
+    pip install -e .
+    ```
 
 2) Start by importing the `CO3DSubmission` class and instantiate a submission run.
     For example, the following code:
@@ -164,4 +159,5 @@ EvalAI server:
 
 6) To submit an official evaluation entry, submit the resulting zip file to the
 EvalAI submission server:
-    !!!!! TODO !!!!!
+
+[===> CO3D challenge submission page  <===](https://eval.ai/web/challenges/challenge-page/1819/submission)

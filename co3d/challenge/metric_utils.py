@@ -6,12 +6,16 @@
 
 import math
 import numpy as np
+import logging
 from typing import Optional
 from typing import Tuple
 from .data_types import RGBDAFrame
 
 
-EVAL_METRIC_NAMES = ["psnr", "psnr_fg", "depth_abs_fg", "iou", "psnr_full_image"]
+EVAL_METRIC_NAMES = ["psnr_masked", "psnr_fg", "psnr_full_image", "depth_abs_fg", "iou"]
+
+
+logger = logging.getLogger(__file__)
 
 
 def eval_one(
@@ -38,6 +42,7 @@ def eval_one_rgbda(
     gt_fg_mask: np.ndarray,
     gt_depth_mask: Optional[np.ndarray] = None,
     crop_around_fg_mask: bool = False,
+    gt_fg_mask_threshold: Optional[float] = 0.5,
 ):
     """
     Args:
@@ -53,6 +58,17 @@ def eval_one_rgbda(
         eval_result: a dictionary {metric_name: str: metric_value: float}
     """
 
+    for xn, x in zip(
+        ("image_rgb", "fg_mask", "depth_map"),
+        (image_rgb, fg_mask, depth_map),
+    ):
+        if not np.isfinite(x).all():
+            raise ValueError(f"Non-finite element in {xn}")
+
+    if gt_fg_mask_threshold is not None:
+        # threshold the gt mask if note done before
+        gt_fg_mask = (gt_fg_mask > gt_fg_mask_threshold).astype(np.float32)
+
     # chuck non-finite depth
     gt_depth_map[~np.isfinite(gt_depth_map)] = 0
 
@@ -60,7 +76,7 @@ def eval_one_rgbda(
         gt_depth_map = gt_depth_map * gt_depth_mask
     
     if crop_around_fg_mask:
-        import pdb; pdb.set_trace()
+        raise NotImplementedError("")
         fg_mask_box_xxyy = _get_bbox_from_mask(gt_fg_mask[0])
         [
             image_rgb,
@@ -87,7 +103,8 @@ def eval_one_rgbda(
         ]
 
     gt_image_rgb_masked = gt_image_rgb * gt_fg_mask
-    psnr = calc_psnr(image_rgb, gt_image_rgb_masked)
+    psnr_masked = calc_psnr(image_rgb, gt_image_rgb_masked)
+    
     psnr_full_image = calc_psnr(image_rgb, gt_image_rgb)
     psnr_fg = calc_psnr(image_rgb, gt_image_rgb_masked, mask=gt_fg_mask)
     mse_depth, abs_depth = calc_mse_abs_depth(
@@ -98,12 +115,8 @@ def eval_one_rgbda(
     )
     iou = calc_iou(fg_mask, gt_fg_mask)
 
-    if not np.isfinite(abs_depth):
-        import pdb; pdb.set_trace()
-        pass
-
     return {
-        "psnr": psnr,
+        "psnr_masked": psnr_masked,
         "psnr_fg": psnr_fg,
         "psnr_full_image": psnr_full_image,
         "depth_abs_fg": abs_depth,
@@ -172,36 +185,87 @@ def calc_mse_abs_depth(
     dmask = (target > 0.0).astype(np.float32)
     dmask_mass = np.clip(dmask.sum(), 1e-4, None)
 
-    if get_best_scale:
-        # mult preds by a scalar "scale_best"
-        # 	s.t. we get best possible mse error
-        scale_best = estimate_depth_scale_factor(
-            pred, target, dmask, best_scale_clamp_thr
-        )
-        pred = pred * scale_best
+    for l_norm in ["l1", "l2"]:     
+        if get_best_scale:
+            # mult preds by a scalar "scale_best"
+            # 	s.t. we get best possible mse error
+            _optimal_scale = {
+                "l1": _optimal_l1_scale,
+                "l2": _optimal_l2_scale,
+            }[l_norm]
+            scale_best = _optimal_scale(
+                pred * dmask, target * dmask, best_scale_clamp_thr
+            )
+            pred_scaled = pred * scale_best
+        else:
+            pred_scaled = pred
 
-    df = target - pred
-    mse_depth = (dmask * (df ** 2)).sum() / dmask_mass
-    abs_depth = (dmask * np.abs(df)).sum() / dmask_mass
+        df = target - pred_scaled
+        
+        if l_norm=="l1":
+            abs_depth = (dmask * np.abs(df)).sum() / dmask_mass
+        elif l_norm=="l2":
+            mse_depth = (dmask * (df ** 2)).sum() / dmask_mass
+        else:
+            raise ValueError(l_norm)
+    
     return mse_depth, abs_depth
 
 
-def estimate_depth_scale_factor(pred, gt, mask, clamp_thr):
-    xy = pred * gt * mask
-    xx = pred * pred * mask
+def _optimal_l2_scale(pred, gt, clamp_thr):
+    """
+    Return the scale s that minimizes ||gt - s pred||^2.
+    The inverse scale is clamped to [eps, Inf]
+    """
+    xy = pred * gt
+    xx = pred * pred
     scale_best = xy.mean() / np.clip(xx.mean(), clamp_thr, None)
     return scale_best
+
+
+def _optimal_l1_scale(pred, gt, clamp_thr):
+    """
+    Return the scale s that minimizes |gt - s pred|_1.
+    The scale is clamped in [-max_scale, max_scale].
+    This function operates along the specified axis.
+    """
+    max_scale = 1 / clamp_thr
+    x, y = pred.reshape(-1), gt.reshape(-1)
+    pivots = y / np.clip(x, 1e-10, None)
+    perm = np.argsort(pivots)
+    pivots = pivots[perm]
+    x_sorted = x[perm]
+    score = -np.abs(x).sum() + 2 * np.cumsum(np.abs(x_sorted))
+    # find the index of first positive score
+    i = (score <= 0).astype(np.float32).sum().astype(np.int64)
+    # i = torch.unsqueeze(i, dim)
+    if i >= len(pivots.reshape(-1)):
+        # logger.warning("Scale outside of bounds!")
+        return 1.0
+    else:
+        scale = pivots[i]
+        scale = np.clip(scale, -max_scale, max_scale)
+    # scale = torch.take_along_dim(pivots, i, dim=dim)
+    # scale = torch.clip(scale, min=-max_scale, max=max_scale)
+    # outshape = [s for si, s in enumerate(y.shape) if si != dim]
+    # scale = scale.view(outshape)
+    return float(scale)
+
 
 
 def calc_iou(
     predict: np.ndarray,
     target: np.ndarray,
     mask: Optional[np.ndarray] = None,
+    threshold: Optional[float] = 0.5,
 ) -> np.float32:
     """
     This is a great loss because it emphasizes on the active
     regions of the predict and targets
     """
+    if threshold is not None:
+        predict = (predict >= threshold).astype(np.float32)
+        target = (target >= threshold).astype(np.float32)
     if mask is not None:
         predict = predict * mask
         target = target * mask

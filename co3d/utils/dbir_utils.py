@@ -38,7 +38,6 @@ def render_point_cloud(
         mask_render=render_mask,
     )
 
-    
 
 def paste_render_to_original_image(
     frame_data: FrameData,

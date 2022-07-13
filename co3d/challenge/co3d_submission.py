@@ -15,7 +15,7 @@ import glob
 from typing import Optional, Tuple
 from dataclasses import dataclass
 import numpy as np
-from tabulate import tabulate
+import csv
 
 from co3d.challenge.metric_utils import EVAL_METRIC_NAMES
 
@@ -313,7 +313,7 @@ class CO3DSubmission:
         logger.warning(
             f"Exported result file: \n\n    ===> {self.submission_archive} <==="
             f"\n\nYou can now submit the file to the EvalAI server"
-            f" ('{self.task.value}' track)."
+            f" ('{self.task.value}-{self.sequence_set.value}' track)."
         )
 
     def _clear_gt_links(self):
@@ -379,6 +379,18 @@ class CO3DSubmission:
                 and self.server_data_folder.endswith(".hdf5")
             ):
                 # this is ok, we allow hdf5 files here
+                logger.info(f"Server folder {self.server_data_folder} is a HDF5 file!")
+                pass
+            elif (
+                self.server_data_folder.endswith(".dbm")
+            ):
+                logger.info(f"Server folder {self.server_data_folder} is a DBM file!")
+                for pfix in [".dat", ".dir"]:
+                    if not os.path.isfile(self.server_data_folder + pfix):
+                        raise ValueError(
+                            f"The DBM {pfix} file for {self.server_data_folder} is missing!"
+                        )
+                # ok again dbm is good
                 pass
             elif not os.path.isdir(self.server_data_folder):
                 raise ValueError(
@@ -457,7 +469,7 @@ class CO3DSubmission:
             if eval_results[(category, subset_name)][0] is not None:
                 # Print the current subset result
                 eval_result_string = " ".join([
-                    f"{k}={v:.2f}"
+                    f"{k}={v:.3f}"
                     for k, v in eval_results[(category, subset_name)][0].items()
                 ])
                 logger.info(f"{category}/{subset_name} result: {eval_result_string}")
@@ -482,14 +494,23 @@ class CO3DSubmission:
                 tab_row.extend([eval_result[k] for k in EVAL_METRIC_NAMES])
             tab_rows.append(tab_row)
 
-        table_str = tabulate(tab_rows, headers=["Category", "Subset name", *EVAL_METRIC_NAMES])
-        logger.info("\n"+table_str)
-
+        try:  # try to export with tabulate
+            from tabulate import tabulate
+            table_str = tabulate(
+                tab_rows, headers=["Category", "Subset name", *EVAL_METRIC_NAMES]
+            )
+            logger.info("\n"+table_str)
+        except ModuleNotFoundError:
+            pass
+        
         # Store the human-readable table
-        table_txt_file = os.path.join(self.output_folder, "results.txt")
+        table_txt_file = os.path.join(self.output_folder, "results.csv")
         logger.info(f"Dumping the results table to {table_txt_file}.")
-        with open(table_txt_file, 'w') as f:
-            f.write(table_str)
+        header=["Category", "Subset name", *EVAL_METRIC_NAMES]
+        with open(table_txt_file, 'w', encoding='UTF8', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(tab_rows)
 
         # Store the recorded exceptions in the submissions folder.
         with open(self.evaluate_exceptions_file, "wb") as f:
@@ -536,13 +557,22 @@ def _link_eval_batch_data_from_server_db_to_gt_tempdir(
     for data_type in ["image", "depth", "mask", "depth_mask"]:
         image_name_postfixed = image_name + f"_{data_type}.png"
         dst = os.path.join(temp_dir, image_name_postfixed)
-        if server_folder.endswith(".hdf5"):
-            # the folder is in fact an hdf5 file
-            # so we just write the path to the hdf5 file
+        if server_folder.endswith(".hdf5") or server_folder.endswith(".dbm"):
+            # the folder is in fact an hdf5/dbm file
+            # so we just write the path to the hdf5/dbm file
             # and read from it later
-            logger.debug(f"{dst}<---HDF5 file path: {server_folder}")
+            logger.debug(f"{dst}<---HDF5/DBM file path: {server_folder}")
+            if server_folder.endswith(".hdf5"):
+                token = "__HDF5__:"
+            elif server_folder.endswith(".dbm"):
+                token = "__DBM__:"
+            else:
+                raise ValueError(server_folder)
+            if os.path.islink(dst):
+                # remove if symlink
+                os.remove(dst)
             with open(dst, "w") as f:
-                f.write("__HDF5__:"+os.path.abspath(server_folder))
+                f.write(token+os.path.normpath(os.path.abspath(server_folder)))
         else:
             src = os.path.join(server_folder, image_name_postfixed)
             logger.debug(f"{src}<---{dst}")
