@@ -9,6 +9,7 @@ import zipfile
 import glob
 import logging
 import multiprocessing
+import numpy as np
 
 from tqdm import tqdm
 from collections import defaultdict
@@ -136,7 +137,11 @@ def _evaluate_pred_gt_pair(args: Tuple[str, str, str]):
     gt_rgbda = load_rgbda_frame(gt_file, check_for_depth_mask=True)
     pred_rgbda = load_rgbda_frame(pred_file)
     check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
-    return eval_one(pred_rgbda, gt_rgbda)
+    eval_result_one = eval_one(pred_rgbda, gt_rgbda)
+    for k, v in eval_result_one.items():
+        if not np.isfinite(v):
+            raise ValueError(f"{gt_example} - {k} is does not have a finite value.")
+    return eval_result_one
     
 
 def evaluate_file_folders(pred_folder: str, gt_folder: str, num_workers: int = 0):
