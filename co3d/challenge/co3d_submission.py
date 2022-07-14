@@ -430,7 +430,7 @@ class CO3DSubmission:
 
     def _export_results_to_hdf5(self):
         # get all fls in the submission cache        
-        all_fls = glob.glob(os.path.join(self.submission_cache, "*", "*", "*.png"))
+        all_fls = sorted(glob.glob(os.path.join(self.submission_cache, "*", "*", "*.png")))
         result_dict = {
             os.path.join(*(os.path.normpath(f).split(os.path.sep)[-3:])): f 
             for f in all_fls 

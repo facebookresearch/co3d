@@ -45,12 +45,16 @@ def paste_render_to_original_image(
 ) -> ImplicitronRender:
     # size of the render
     render_size = render.image_render.shape[2:]
-    # bounding box of the crop in the original image
-    bbox_xywh = frame_data.crop_bbox_xywh[0]
     
     # original image size
     orig_size = frame_data.image_size_hw[0].tolist()
 
+    # bounding box of the crop in the original image
+    if frame_data.crop_bbox_xywh is not None:
+        bbox_xywh = frame_data.crop_bbox_xywh[0]
+    else:
+        bbox_xywh = torch.LongTensor([0, 0, orig_size[1], orig_size[0]])
+    
     # get the valid part of the render
     render_bounds_wh = [None, None]
     for axis in [0, 1]:

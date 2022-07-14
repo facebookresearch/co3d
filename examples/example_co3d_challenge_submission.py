@@ -30,7 +30,6 @@ from co3d.dataset.utils import redact_eval_frame_data, _check_valid_eval_frame_d
 DATASET_ROOT = os.getenv("CO3DV2_DATASET_ROOT")
 DATASET_ROOT_HIDDEN = os.getenv("CO3DV2_HIDDEN_DATASET_ROOT")
 EVAL_AI_PERSONAL_TOKEN = os.getenv("EVAL_AI_PERSONAL_TOKEN")
-ON_SERVER = False
 
 
 logger = logging.getLogger(__name__)
@@ -236,27 +235,14 @@ def make_dbir_submission(
         submission_output_folder += "_cheating"
 
     # create the submission object
-    if not ON_SERVER:
-        # local evaluation
-        submission = CO3DSubmission(
-            task=task,
-            sequence_set=sequence_set,
-            output_folder=submission_output_folder,
-            dataset_root=DATASET_ROOT,
-            eval_ai_personal_token=EVAL_AI_PERSONAL_TOKEN,
-        )
-    else:
-        # evaluation on server (only for internal use)
-        submission = CO3DSubmission(
-            task=task,
-            sequence_set=sequence_set,
-            output_folder=submission_output_folder,
-            dataset_root=DATASET_ROOT,
-            on_server=True,
-            server_data_folder=DATASET_ROOT_HIDDEN.format(f"{task.value}_{sequence_set.value}"),
-            eval_ai_personal_token=EVAL_AI_PERSONAL_TOKEN,
-        )
-
+    submission = CO3DSubmission(
+        task=task,
+        sequence_set=sequence_set,
+        output_folder=submission_output_folder,
+        dataset_root=DATASET_ROOT,
+        eval_ai_personal_token=EVAL_AI_PERSONAL_TOKEN,
+    )
+    
     if task==CO3DTask.FEW_VIEW and submission.has_only_single_sequence_subset():
         # if only a single-sequence dataset is downloaded, only the many-view task
         # is available
@@ -296,10 +282,7 @@ def make_dbir_submission(
             )
 
     # Locally evaluate the submission in case we dont evaluate on the hidden test set.
-    if (
-        not skip_evaluation
-        and not(sequence_set == CO3DSequenceSet.TEST and not ON_SERVER)
-    ):
+    if (not skip_evaluation and sequence_set != CO3DSequenceSet.TEST):
         submission.evaluate(num_workers=num_eval_workers)
 
     # Export the submission predictions for submition to the evaluation server.
