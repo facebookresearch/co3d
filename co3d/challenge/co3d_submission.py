@@ -13,7 +13,7 @@ import pickle
 import glob
 from tabulate import tabulate
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from dataclasses import dataclass
 import numpy as np
 import csv
@@ -25,7 +25,19 @@ from .data_types import RGBDAFrame, CO3DTask, CO3DSequenceSet
 from .io import (
     load_all_eval_batches,
     store_rgbda_frame,
+    export_result_file_dict_to_hdf5,
+    make_hdf5_file_links,
+    link_file_to_db_file,
 )
+
+
+CO3D_CHALLENGE_ID = 1819
+CO3D_PHASE_ID = {
+    (CO3DTask.MANY_VIEW, CO3DSequenceSet.DEV): 3541,
+    (CO3DTask.MANY_VIEW, CO3DSequenceSet.TEST): 3542,
+    (CO3DTask.FEW_VIEW, CO3DSequenceSet.DEV): 3543,
+    (CO3DTask.FEW_VIEW, CO3DSequenceSet.TEST): 3544,
+}
 
 
 logger = logging.getLogger(__file__)
@@ -72,20 +84,32 @@ class CO3DSubmission:
         dataset_root: Optional[str] = None,
         server_data_folder: Optional[str] = None,
         on_server: bool = False,
+        eval_ai_personal_token: Optional[str] = None,
+        export_format: str = "hdf5",  # zip | hdf5
     ):
+        """
+        TODO
+        
+        eval_ai_personal_token: A personal eval_ai token. Required for enabling cli
+            submission with `self.submit_to_eval_ai`.
+        """
         self.task = task
         self.sequence_set = sequence_set
         self.output_folder = output_folder
         self.dataset_root = dataset_root
         self.server_data_folder = server_data_folder
         self.on_server = on_server
+        self.export_format = export_format
+        self.eval_ai_personal_token = eval_ai_personal_token
+
+        submission_archive_ext = self.export_format
         self.submission_archive = os.path.join(
-            output_folder, f"submission_{task.value}_{sequence_set.value}.zip"
+            output_folder, f"submission_{task.value}_{sequence_set.value}.{submission_archive_ext}"
         )
         self.evaluate_exceptions_file = os.path.join(output_folder, "eval_exceptions.pkl")
         self.submission_cache = os.path.join(output_folder, "submission_cache")
         os.makedirs(self.submission_cache, exist_ok=True)
-        self._result_list = []
+        self._result_list: List[CO3DSubmissionRender] = []
         self._eval_batches_map = None
     
     @staticmethod
@@ -279,6 +303,74 @@ class CO3DSubmission:
                 
         return valid
 
+    def submit_to_eval_ai(
+        self,
+        challenge_id: int = CO3D_CHALLENGE_ID,
+    ):
+        """
+        Submit the exported results to the EvalAI server.
+        """
+        logger.info(f"Submitting {self.submission_archive} to EvalAI.")
+        assert not self.on_server
+        if not os.path.isfile(self.submission_archive):
+            raise ValueError(
+                f"Submission archive {self.submission_archive} does not exist."
+                " Please run submission.export_results() first."
+            )
+        try:
+            import evalai
+        except ModuleNotFoundError:
+            raise ValueError(
+                "Cannot find EvalAI cli package."
+                " Please install it with pip: `pip install evalai`"
+            )
+
+        if self.eval_ai_personal_token is None or len(self.eval_ai_personal_token)==0:
+            raise ValueError(
+                "For EvalAI submission, the personal token"
+                +" self.eval_ai_personal_token has to be set!"
+                +" Please obtain it from you EvalAI profile page https://eval.ai/web/profile"
+                +" by clicking on 'Get your Auth Token' button."
+            )
+
+        # run the evalai imports
+        from click.testing import CliRunner
+        from evalai.challenges import challenge
+        from evalai.add_token import set_token
+        runner = CliRunner()
+
+        # set the eval ai auth token
+        result = runner.invoke(set_token, [self.eval_ai_personal_token])
+        if result.exit_code!=0:
+            raise ValueError("Could not set the eval_ai personal token.")
+        
+        # get the challenge phase ID
+        phase_id = CO3D_PHASE_ID[(self.task, self.sequence_set)]
+        
+        # run the submission script
+        os.system(
+            f"evalai challenge {challenge_id} phase {phase_id}"
+            + f" submit --file {self.submission_archive} --large"
+        )
+        
+        # the following, unfortunately, does not accept keyboard input
+        # result = runner.invoke(
+        #     challenge, [
+        #         str(challenge_id), 
+        #         "phase", str(phase_id), 
+        #         "submit", 
+        #         "--file", self.submission_archive,
+        #         "--large",
+        #     ],
+        #     input="/n",
+        # )
+        # if result.output != 0:
+        #     raise ValueError(
+        #         "Submission failed:"
+        #         + result.output
+        #     )
+
+
     def export_results(self, validate_results: bool = True):
         """
         Export the generated evaluation images for a submission to the EvalAI server.
@@ -303,18 +395,31 @@ class CO3DSubmission:
 
         # zip the directory
         logger.info(f"Archiving {self.submission_cache} to {self.submission_archive}.")
-        shutil.make_archive(
-            base_name=self.submission_archive.replace(".zip", ""),
-            format="zip",
-            root_dir=self.submission_cache,
-            base_dir=".",
-        )
+        if self.export_format=="zip":
+            shutil.make_archive(
+                base_name=self.submission_archive.replace(".zip", ""),
+                format="zip",
+                root_dir=self.submission_cache,
+                base_dir=".",
+            )
+        elif self.export_format=="hdf5":
+            self._export_results_to_hdf5()
+        else:
+            raise ValueError(f"Unknown export format {self.export_format}.")
+
+        exported_file_size = os.path.getsize(self.submission_archive) / 1e9
 
         # finally export the result
         logger.warning(
-            f"Exported result file: \n\n    ===> {self.submission_archive} <==="
-            f"\n\nYou can now submit the file to the EvalAI server"
+            f"Exported result file ({exported_file_size:.2f} GB):"
+            f"\n\n    ===> {self.submission_archive} <==="
+            f"\n\nYou can now submit the file to the EvalAI server:"
+            f"\n    https://eval.ai/web/challenges/challenge-page/1819/submission"
             f" ('{self.task.value}-{self.sequence_set.value}' track)."
+            f"\n\nAlternatively, you can run submission.submit_to_eval_ai() to directly"
+            f" submit the results file using EvalAI-cli (command line interface)."
+            f" For the latter, make sure to `pip install evalai` and to set"
+            f" self.eval_ai_personal_token to a correct value."
         )
 
     def _clear_gt_links(self):
@@ -323,12 +428,23 @@ class CO3DSubmission:
             logger.debug(f"Clearing GT link directory {gt_folder}.")
             shutil.rmtree(gt_folder)
 
+    def _export_results_to_hdf5(self):
+        # get all fls in the submission cache        
+        all_fls = glob.glob(os.path.join(self.submission_cache, "*", "*", "*.png"))
+        result_dict = {
+            os.path.join(*(os.path.normpath(f).split(os.path.sep)[-3:])): f
+            for f in all_fls
+        }
+        export_result_file_dict_to_hdf5(self.submission_archive, result_dict)
 
     def fill_results_from_cache(self):
         """
         Analyze the results already stored in self.submission_cache and register them
         with the submission object.
         """
+        if not os.path.isdir(self.submission_cache):
+            logger.info(f"{self.submission_cache} folder does not exist.")
+            return
         categories = os.listdir(self.submission_cache)
         for category in categories:
             cat_dir = os.path.join(self.submission_cache, category)
@@ -359,17 +475,26 @@ class CO3DSubmission:
                     )
 
 
-    def evaluate_zip_file(self, zip_path: str, num_workers: int = 0):
+    def _fill_cache_from_hdf5(self, archive_path: str):
+        make_hdf5_file_links(archive_path, self.submission_cache)
+
+
+    def evaluate_archive_file(self, archive_path: str, num_workers: int = 0):
         """
-        Extract a zip file with exported results `zip_path` and evaluate.
+        Extract a file with exported results `archive_path` and evaluate.
         
         Args:
-            zip_path: A path to the zip file cantaining exported results.
-                Such zip file can be exported using `self.export_results`.
+            archive_path: A path to the archive file cantaining exported results.
+                Such archive file can be exported using `self.export_results`.
         """
         os.makedirs(self.submission_cache, exist_ok=True)
-        logger.info(f"Extracting {zip_path} into {self.submission_cache}.")
-        shutil.unpack_archive(zip_path, self.submission_cache, "zip")
+        logger.info(f"Extracting {archive_path} into {self.submission_cache}.")
+        if self.export_format=="zip":
+            shutil.unpack_archive(archive_path, self.submission_cache, "zip")
+        elif self.export_format=="hdf5":
+            self._fill_cache_from_hdf5(archive_path)
+        else:
+            raise ValueError(f"Unknown export format {self.export_format}")
         logger.info(f"Filling results from cache {self.submission_cache}.")
         self.fill_results_from_cache()
         return self.evaluate(num_workers=num_workers)
@@ -378,14 +503,16 @@ class CO3DSubmission:
     def evaluate(self, num_workers: int = 0):
         if self.on_server:
             if (
-                os.path.isfile(self.server_data_folder)
+                self.server_data_folder is not None
+                and os.path.isfile(self.server_data_folder)
                 and self.server_data_folder.endswith(".hdf5")
             ):
                 # this is ok, we allow hdf5 files here
                 logger.info(f"Server folder {self.server_data_folder} is a HDF5 file!")
                 pass
             elif (
-                self.server_data_folder.endswith(".dbm")
+                self.server_data_folder is not None
+                and self.server_data_folder.endswith(".dbm")
             ):
                 logger.info(f"Server folder {self.server_data_folder} is a DBM file!")
                 for pfix in [".dat", ".dir"]:
@@ -395,7 +522,10 @@ class CO3DSubmission:
                         )
                 # ok again dbm is good
                 pass
-            elif not os.path.isdir(self.server_data_folder):
+            elif (
+                self.server_data_folder is None
+                or not os.path.isdir(self.server_data_folder)
+            ):
                 raise ValueError(
                     "For evaluation on the server server_data_folder has to be specified."
                 )
@@ -565,17 +695,7 @@ def _link_eval_batch_data_from_server_db_to_gt_tempdir(
             # so we just write the path to the hdf5/dbm file
             # and read from it later
             logger.debug(f"{dst}<---HDF5/DBM file path: {server_folder}")
-            if server_folder.endswith(".hdf5"):
-                token = "__HDF5__:"
-            elif server_folder.endswith(".dbm"):
-                token = "__DBM__:"
-            else:
-                raise ValueError(server_folder)
-            if os.path.islink(dst):
-                # remove if symlink
-                os.remove(dst)
-            with open(dst, "w") as f:
-                f.write(token+os.path.normpath(os.path.abspath(server_folder)))
+            link_file_to_db_file(server_folder, dst)
         else:
             src = os.path.join(server_folder, image_name_postfixed)
             logger.debug(f"{src}<---{dst}")
