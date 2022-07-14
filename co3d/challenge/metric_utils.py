@@ -122,34 +122,6 @@ def eval_one_rgbda(
     )
     iou = calc_iou(fg_mask, gt_fg_mask)
 
-    # if True:
-    #     from visdom import Visdom
-    #     viz = Visdom(0)
-
-    #     import cv2  # pip install opencv-python
-    #     depth_show_im = np.concatenate([
-    #         gt_depth_map * gt_fg_mask,
-    #         depth_map * gt_fg_mask * aux_depth["scale_l1"],
-    #         np.abs(depth_map  * aux_depth["scale_l1"] - gt_depth_map) * gt_fg_mask,
-    #     ], axis=2)[0]
-    #     # depth_show_im = cv2.GaussianBlur(depth_show_im, (5, 5), cv2.BORDER_DEFAULT)
-
-    #     viz.heatmap(
-    #         depth_show_im,
-    #         env="metric_utils_dbg",
-    #         win="metric_utils_dbg_depth",
-    #     )
-
-    #     viz.image(
-    #         np.concatenate([
-    #             image_rgb,
-    #             gt_image_rgb,
-    #         ], axis=2),
-    #         env="metric_utils_dbg",
-    #         win="metric_utils_dbg_im",
-    #     )
-    #     import pdb; pdb.set_trace()
-
     return {
         "psnr_masked": psnr_masked,
         "psnr_fg": psnr_fg,
