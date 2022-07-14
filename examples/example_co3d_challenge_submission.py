@@ -287,7 +287,7 @@ def make_dbir_submission(
 
     # Export the submission predictions for submition to the evaluation server.
     # This also validates completeness of the produced predictions.
-    submission.export_results(validate_results=True)
+    # submission.export_results(validate_results=True)
 
     if submit_to_eval_ai:
         submission.submit_to_eval_ai()

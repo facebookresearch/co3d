@@ -62,6 +62,7 @@ def paste_render_to_original_image(
         valid_dim_pix = frame_data.mask_crop[0, 0].sum(dim=axis).reshape(-1).nonzero()
         assert valid_dim_pix.min()==0
         render_bounds_wh[axis] = valid_dim_pix.max().item() + 1
+    print(render_bounds_wh)
 
     render_out = {}
     for render_type, render_val in dataclasses.asdict(render).items():
@@ -77,6 +78,16 @@ def paste_render_to_original_image(
             mode="bilinear" if render_type=="image_render" else "nearest",
             align_corners=False if render_type=="image_render" else None,
         )
+
+        if render_type=="depth_render":
+            print("REMOVE THIS!")
+            # inpaint the depth holes
+            from pixar_replay.core.models.depth_prediction.spatial_interpolation.gaussian_inpainting import GaussianInpaiting
+            from pytorch3d.implicitron.tools.config import expand_args_fields
+            expand_args_fields(GaussianInpaiting)
+            inp = GaussianInpaiting(sigma=4.0, preserve_known=True)
+            render_resize_, _ = inp(image=render_resize_, mask=(render_resize_ > 1e-3).float())
+
         # paste the original-sized crop to the original image
         render_pasted_ = render_resize_.new_zeros(1, render_resize_.shape[1], *orig_size)
         render_pasted_[

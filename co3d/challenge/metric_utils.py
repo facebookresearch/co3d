@@ -114,7 +114,7 @@ def eval_one_rgbda(
     
     psnr_full_image = calc_psnr(image_rgb, gt_image_rgb)
     psnr_fg = calc_psnr(image_rgb, gt_image_rgb_masked, mask=gt_fg_mask)
-    mse_depth, abs_depth = calc_mse_abs_depth(
+    mse_depth, abs_depth, aux_depth = calc_mse_abs_depth(
         depth_map,
         gt_depth_map,
         gt_fg_mask,
@@ -122,33 +122,33 @@ def eval_one_rgbda(
     )
     iou = calc_iou(fg_mask, gt_fg_mask)
 
-    if True:
-        from visdom import Visdom
-        viz = Visdom(0)
+    # if True:
+    #     from visdom import Visdom
+    #     viz = Visdom(0)
 
-        import cv2  # pip install opencv-python
-        depth_show_im = np.concatenate([
-            gt_depth_map * gt_fg_mask,
-            depth_map * gt_fg_mask,
-            np.abs(depth_map - gt_depth_map) * gt_fg_mask,
-        ], axis=2)[0]
-        depth_show_im = cv2.GaussianBlur(depth_show_im, (5, 5), cv2.BORDER_DEFAULT)
+    #     import cv2  # pip install opencv-python
+    #     depth_show_im = np.concatenate([
+    #         gt_depth_map * gt_fg_mask,
+    #         depth_map * gt_fg_mask * aux_depth["scale_l1"],
+    #         np.abs(depth_map  * aux_depth["scale_l1"] - gt_depth_map) * gt_fg_mask,
+    #     ], axis=2)[0]
+    #     # depth_show_im = cv2.GaussianBlur(depth_show_im, (5, 5), cv2.BORDER_DEFAULT)
 
-        viz.heatmap(
-            depth_show_im,
-            env="metric_utils_dbg",
-            win="metric_utils_dbg_depth",
-        )
+    #     viz.heatmap(
+    #         depth_show_im,
+    #         env="metric_utils_dbg",
+    #         win="metric_utils_dbg_depth",
+    #     )
 
-        viz.image(
-            np.concatenate([
-                image_rgb,
-                gt_image_rgb,
-            ], axis=2),
-            env="metric_utils_dbg",
-            win="metric_utils_dbg_im",
-        )
-        import pdb; pdb.set_trace()
+    #     viz.image(
+    #         np.concatenate([
+    #             image_rgb,
+    #             gt_image_rgb,
+    #         ], axis=2),
+    #         env="metric_utils_dbg",
+    #         win="metric_utils_dbg_im",
+    #     )
+    #     import pdb; pdb.set_trace()
 
     return {
         "psnr_masked": psnr_masked,
@@ -220,6 +220,7 @@ def calc_mse_abs_depth(
     dmask = (target > 0.0).astype(np.float32)
     dmask_mass = np.clip(dmask.sum(), 1e-4, None)
 
+    scale_l1 = scale_l2 = None
     for l_norm in ["l1", "l2"]:     
         if get_best_scale:
             # mult preds by a scalar "scale_best"
@@ -232,6 +233,12 @@ def calc_mse_abs_depth(
                 pred * dmask, target * dmask, best_scale_clamp_thr
             )
             pred_scaled = pred * scale_best
+            if l_norm=="l1":
+                scale_l1 = scale_best 
+            elif l_norm=="l2":
+                scale_l2 = scale_best 
+            else:
+                raise ValueError(l_norm)
         else:
             pred_scaled = pred
 
@@ -244,7 +251,7 @@ def calc_mse_abs_depth(
         else:
             raise ValueError(l_norm)
     
-    return mse_depth, abs_depth
+    return mse_depth, abs_depth, {"scale_l1": scale_l1, "scale_l2": scale_l2}
 
 
 def _optimal_l2_scale(pred, gt, clamp_thr):

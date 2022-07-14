@@ -311,7 +311,6 @@ class CO3DSubmission:
         Submit the exported results to the EvalAI server.
         """
         logger.info(f"Submitting {self.submission_archive} to EvalAI.")
-        assert not self.on_server
         if not os.path.isfile(self.submission_archive):
             raise ValueError(
                 f"Submission archive {self.submission_archive} does not exist."
