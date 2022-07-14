@@ -2,3 +2,4 @@ visdom
 tqdm
 lpips
 requests
+h5py

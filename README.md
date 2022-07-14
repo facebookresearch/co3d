@@ -67,7 +67,7 @@ This is a `Python 3` / `PyTorch` codebase.
 2) [Install `PyTorch3D`.](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md)
 3) Install the remaining dependencies in `requirements.txt`:
 ```
-pip install lpips visdom tqdm requests
+pip install lpips visdom tqdm requests h5py 
 ```
 4) Install the CO3D package itself: `pip install -e .`
 
@@ -79,6 +79,7 @@ pip install lpips visdom tqdm requests
 - [`visdom`](https://github.com/facebookresearch/visdom)
 - [`lpips`](https://github.com/richzhang/PerceptualSimilarity)
 - [`requests`](https://docs.python-requests.org/en/master/)
+- ['h5py'](http://www.h5py.org/)
 
 Note that the core data model in `co3d/dataset/data_types.py` is independent of `PyTorch`/`PyTorch3D` and can be imported and used with other machine-learning frameworks.
 

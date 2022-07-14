@@ -389,13 +389,13 @@ class CO3DSubmission:
                     " The evaluation will be incomplete."
                 )
         
-        # First we need to remove all links to the ground truth directories
-        # that were potentially created during a call to self.evaluate().
-        self._clear_gt_links()
-
+        
         # zip the directory
         logger.info(f"Archiving {self.submission_cache} to {self.submission_archive}.")
         if self.export_format=="zip":
+            # First we need to remove all links to the ground truth directories
+            # that were potentially created during a call to self.evaluate().
+            self._clear_gt_links()
             shutil.make_archive(
                 base_name=self.submission_archive.replace(".zip", ""),
                 format="zip",
@@ -432,8 +432,9 @@ class CO3DSubmission:
         # get all fls in the submission cache        
         all_fls = glob.glob(os.path.join(self.submission_cache, "*", "*", "*.png"))
         result_dict = {
-            os.path.join(*(os.path.normpath(f).split(os.path.sep)[-3:])): f
-            for f in all_fls
+            os.path.join(*(os.path.normpath(f).split(os.path.sep)[-3:])): f 
+            for f in all_fls 
+            if not os.path.split(os.path.dirname(f))[-1].startswith("GT_")
         }
         export_result_file_dict_to_hdf5(self.submission_archive, result_dict)
 

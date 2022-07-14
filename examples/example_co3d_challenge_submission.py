@@ -45,7 +45,7 @@ def get_dataset_map(
     Obtain the dataset map that contains the train/val/test dataset objects.
     """
     expand_args_fields(JsonIndexDatasetMapProviderV2)
-    dataset_map = JsonIndexDatasetMapProviderV2(
+    dataset_map_provider = JsonIndexDatasetMapProviderV2(
         category=category,
         subset_name=subset_name,
         dataset_root=dataset_root,
@@ -54,7 +54,7 @@ def get_dataset_map(
         load_eval_batches=True,
         dataset_JsonIndexDataset_args=DictConfig({"remove_empty_masks": False}),
     )
-    return dataset_map.get_dataset_map()
+    return dataset_map_provider.get_dataset_map()
 
 
 @torch.no_grad()
@@ -71,7 +71,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
     model extracted for a given category, and a dataset subset.
 
     Args:
-        
+
     """
     logger.info(
         "Runing depth-based image rendering (DBIR) new view synthesis "
@@ -297,7 +297,7 @@ def make_dbir_submission(
 
     # Locally evaluate the submission in case we dont evaluate on the hidden test set.
     if (
-        not skip_evaluation 
+        not skip_evaluation
         and not(sequence_set == CO3DSequenceSet.TEST and not ON_SERVER)
     ):
         submission.evaluate(num_workers=num_eval_workers)
