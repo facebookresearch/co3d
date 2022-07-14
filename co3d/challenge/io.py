@@ -13,7 +13,7 @@ import dbm
 import functools
 from io import BytesIO
 from PIL import Image
-from typing import Optional, Callable, Dict
+from typing import Optional, Callable, Dict, Union
 from tqdm import tqdm
 from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 
@@ -112,56 +112,50 @@ def store_image(image: np.ndarray, fl: str):
     Image.fromarray((image.transpose(1, 2, 0) * 255.0).astype(np.uint8)).save(fl)
 
 
-def _handle_db_file(fl: str):
-    for token, data_load_fun in (
-        ("__DBM__:", _get_image_data_from_dbm),
-        ("__HDF5__:", _get_image_data_from_h5),
+def _handle_db_file(fl_or_db_link: str):
+    """
+    In case `fl_or_db_link` is a symlink pointing at an .hdf5 or .dbm database file,
+    this function returns a BytesIO object yielding the underlying file's binary data.
+
+    Otherwise, the function simply returns `fl_or_db_link`.
+    """
+
+    fl_or_bytes_io = fl_or_db_link
+    for db_format, data_load_fun in (
+        (".hdf5", _get_image_data_from_h5),
+        (".dbm", _get_image_data_from_dbm),
     ):
-        fl = _maybe_get_db_image_data_bytes_io_from_file(fl, token, data_load_fun)
-        if not isinstance(fl, str):
-            # logger.info(f"{fl} is {token}!")
+        fl_or_bytes_io = _maybe_get_db_image_data_bytes_io_from_file(
+            fl_or_db_link,
+            db_format,
+            data_load_fun,
+        )
+        if not isinstance(fl_or_bytes_io, str):
+            # logger.info(f"{fl} is {db_format}!")
             break
-    return fl
+    return fl_or_bytes_io
 
 
 def _maybe_get_db_image_data_bytes_io_from_file(
-    fl: str,
-    token: str,
+    fl_or_db_link: str,
+    db_format: str,
     data_load_fun: Callable,
-):
+) -> Union[str, BytesIO]:
     """
-    In case `fl` is a unicode text file starting with `token`, 
-    the file `fl` contains a string with a path to a database file that holds the actual
-    file binary data.
-    
-    This function makes sure that either the filepath is returned if `fl`
-    does not contain database-file-path, otherwise returns the BytesIO object with
-    the `fl`s binary data.
-    """
+    In case `fl_or_db_link` is a symlink pointing at a database file `db_path` with
+    of type `db_format`, this function calls `data_load_fun(fl_or_db_link, db_path)` 
+    to retrieve a BytesIO object yielding the `fl`s binary data.
 
-    if os.path.islink(fl):
-        realpath = os.readlink(fl)
-        if (
-            (token=="__HDF5__:" and realpath.endswith(".hdf5"))
-            or (token=="__DBM__:" and realpath.endswith(".dbm"))
-        ):
-            db_path_clean = realpath
-        else:
-            return fl
+    Otherwise, the function simply returns `fl_or_db_link`.
+    """
+    if os.path.islink(fl_or_db_link):
+        realpath = os.readlink(fl_or_db_link)
+        if not realpath.endswith(db_format):
+            return fl_or_db_link
+        db_path = fl_or_db_link
     else:
-        with open(fl, "rb") as f:
-            first_bytes = f.read(len(token))
-            try:
-                first_bytes_decoded = first_bytes.decode()
-            except UnicodeDecodeError:
-                return fl
-            if first_bytes_decoded != token:
-                return fl
-        with open(fl, "r") as f:
-            db_path = f.readlines()[0]
-        assert db_path.startswith(token)
-        db_path_clean = db_path[len(token):]
-    return data_load_fun(db_path_clean, fl)
+        return fl_or_db_link
+    return data_load_fun(realpath, db_path)
 
 
 @functools.lru_cache(maxsize=1)
@@ -191,6 +185,22 @@ def get_category_to_subset_name_list(
     task: Optional[CO3DTask] = None,
     sequence_set: Optional[CO3DSequenceSet] = None,
 ):
+    """
+    Get the mapping from categories to existing subset names.
+
+    Args:
+        dataset_root: The dataset root folder.
+        task: CO3D Challenge task.
+        sequence_set: CO3D Challenge sequence_set.
+
+    Returns:
+        category_to_subset_name_list: A dict of the following form:
+            {
+                category: [subset_name_0, subset_name_1, ...],
+                ...
+            }
+    """
+
     json_file = os.path.join(dataset_root, "category_to_subset_name_list.json")
     with open(json_file, "r") as f:
         category_to_subset_name_list = json.load(f)
@@ -231,6 +241,23 @@ def load_all_eval_batches(
     sequence_set: Optional[CO3DSequenceSet] = None,
     remove_frame_paths: bool = False,
 ):
+    """
+    Load eval batches files stored in dataset_root into a dictionary:
+    {
+        (category, subset_name): eval_batches_index,
+        ...
+    }
+
+    Args:
+        dataset_root: The root of the CO3DV2 dataset.
+        task: CO3D challenge task.
+        sequence_set: CO3D challenge sequence set.
+        remove_frame_paths: If `True`, removes the paths to frames from the loaded
+            dataset index.
+
+    Returns:
+        eval_batches_dict: Output dictionary.
+    """
 
     category_to_subset_name_list = get_category_to_subset_name_list(
         dataset_root,
@@ -238,17 +265,17 @@ def load_all_eval_batches(
         sequence_set=sequence_set,
     )
 
-    eval_batches = {}
+    eval_batches_dict = {}
     for category, subset_name_list in category_to_subset_name_list.items():
         for subset_name in subset_name_list:
             # load the subset eval batches
-            eval_batches[(category, subset_name)] = _load_eval_batches_file(
+            eval_batches_dict[(category, subset_name)] = _load_eval_batches_file(
                 dataset_root,
                 category,
                 subset_name,
                 remove_frame_paths=remove_frame_paths,
             )
-    return eval_batches
+    return eval_batches_dict
 
 
 def _load_eval_batches_file(
@@ -274,15 +301,23 @@ def _load_eval_batches_file(
 
 
 def export_result_file_dict_to_hdf5(h5path: str, filedict: Dict[str, str]):
+    """
+    Export the result files to an hdf5 file that will be sent to the EvalAI server:
+
+    Args:
+        h5path: Target hdf5 file path.
+        filedict: Dict in form {relative_file_path: absolute_file_path}
+    """
     logger.info(f"Exporting {len(filedict)} files to HDF5 file {h5path}.")
+    if len(filedict)==0:
+        raise ValueError("No data to export!")
     assert h5path.endswith(".hdf5")
     if os.path.isfile(h5path):
         os.remove(h5path)
     os.makedirs(os.path.dirname(h5path), exist_ok=True)
     with h5py.File(h5path, "w", libver='latest') as fh5:
         dt = h5py.special_dtype(vlen=np.dtype('uint8'))
-        max_path_len = max(len(p) for p in filedict.keys())
-        
+        max_path_len = max(len(p) for p in filedict.keys())        
         dset = fh5.create_dataset(
             'binary_data', (len(filedict), ), dtype=dt, compression="gzip"
         )
@@ -305,6 +340,14 @@ def export_result_file_dict_to_hdf5(h5path: str, filedict: Dict[str, str]):
 
 
 def make_hdf5_file_links(h5path: str, root: str):
+    """
+    Link all files whose binary data are stored in an HDF5 file `h5path` to
+    files under the root folder.
+
+    Args:
+        h5path: HDF5 file.
+        root: The root folder for exporting symlinks.
+    """
     logger.info(f"Making file links in {root} to DB data in {h5path}.")
     assert h5path.endswith(".hdf5")
     with h5py.File(h5path, "r", libver='latest') as fh5:
@@ -323,6 +366,9 @@ def make_hdf5_file_links(h5path: str, root: str):
 
 
 def link_file_to_db_file(db_file: str, file: str, overwrite: bool = True):
+    """
+    Make a symlink file->db_file
+    """
     if db_file.endswith(".hdf5"):
         token = "__HDF5__:"
     elif db_file.endswith(".dbm"):
@@ -333,7 +379,7 @@ def link_file_to_db_file(db_file: str, file: str, overwrite: bool = True):
         os.remove(file)
     os.symlink(db_file, file)
     
-    # symlinks are cleaner ... do not use this anymore
+    # symlinks are cleaner ... do not use this anymore:
     # with open(file, "w") as f:
     #     f.write(token+os.path.normpath(os.path.abspath(db_file)))
 

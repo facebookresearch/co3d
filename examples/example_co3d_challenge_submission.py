@@ -66,6 +66,13 @@ def update_dbir_submission_with_category_and_subset_predictions(
     num_workers: int = 12,
     cheat_with_gt_data: bool = True,
 ):
+    """
+    Updates the CO3DSubmission object `submission` with predictions of a DBIR
+    model extracted for a given category, and a dataset subset.
+
+    Args:
+        
+    """
     logger.info(
         "Runing depth-based image rendering (DBIR) new view synthesis "
         f"on category '{category}' subset '{subset_name}'"
@@ -81,7 +88,6 @@ def update_dbir_submission_with_category_and_subset_predictions(
     # Obtain the CO3Dv2 dataset map
     dataset_map = get_dataset_map(dataset_root, category, subset_name)
 
-    # Take the training dataset for building the rendered models.
     if task==CO3DTask.MANY_VIEW:
         # Obtain the point cloud of the corresponding evaluation sequence
         # by unprojecting depth maps of the known training views in the sequence:
@@ -211,8 +217,13 @@ def make_dbir_submission(
         cheat_with_gt_data: If `True`, bypasses the DBIR stage and only simply
             uses ground truth test data. This, of course, only works for the
             development set which is not redacted.
-        evaluate_only: If `True`, only evaluates the current submission without generating
-            new predictions. Useful for re-evaluating existing submissions.
+        fill_results_from_cache: If `True`, skips running the DBIR model and rather 
+            loads the results exported from a previous run.
+        skip_evaluation: If `True`, will not locally evaluate the predictions.
+        submit_to_eval_ai: If `True`, will automatically submit the exported result
+            archive to EvalAI using the CLI interface (needs to be installed with 
+            `pip install evalai`). This requires setting the EVAL_AI_PERSONAL_TOKEN 
+            environment variable to your personal EVAL_AI token.
     """
     # the folder storing all predictions and results of the submission
     submission_output_folder = os.path.join(

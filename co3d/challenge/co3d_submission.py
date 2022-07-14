@@ -692,10 +692,11 @@ def _link_eval_batch_data_from_server_db_to_gt_tempdir(
         dst = os.path.join(temp_dir, image_name_postfixed)
         if server_folder.endswith(".hdf5") or server_folder.endswith(".dbm"):
             # the folder is in fact an hdf5/dbm file
-            # so we just write the path to the hdf5/dbm file
-            # and read from it later
+            # so we just make a symlink pointing from the `dst` file
+            # to the hdf5/dbm database
+            db_file = server_folder
             logger.debug(f"{dst}<---HDF5/DBM file path: {server_folder}")
-            link_file_to_db_file(server_folder, dst)
+            link_file_to_db_file(db_file, dst)
         else:
             src = os.path.join(server_folder, image_name_postfixed)
             logger.debug(f"{src}<---{dst}")
