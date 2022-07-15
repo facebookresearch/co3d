@@ -350,7 +350,7 @@ def make_hdf5_file_links(h5path: str, root: str):
     """
     logger.info(f"Making file links in {root} to DB data in {h5path}.")
     assert h5path.endswith(".hdf5")
-    with h5py.File(h5path, "r", libver='latest') as fh5:
+    with h5py.File(h5path, "r") as fh5:
         filepaths = [f.decode("UTF-8") for f in np.array(fh5["filepaths"])]
         file_name_to_tgt_file = {
             os.path.split(p)[-1]: os.path.join(root, p) for p in filepaths
