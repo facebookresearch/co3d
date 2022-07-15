@@ -62,7 +62,6 @@ def paste_render_to_original_image(
         valid_dim_pix = frame_data.mask_crop[0, 0].sum(dim=axis).reshape(-1).nonzero()
         assert valid_dim_pix.min()==0
         render_bounds_wh[axis] = valid_dim_pix.max().item() + 1
-    print(render_bounds_wh)
 
     render_out = {}
     for render_type, render_val in dataclasses.asdict(render).items():
