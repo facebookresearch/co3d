@@ -175,7 +175,10 @@ def _get_image_data_from_dbm(dbmpath: str, fl: str):
 def _get_image_data_from_h5(h5path: str, fl: str):
     with h5py.File(h5path, "r") as f:
         flname = os.path.split(fl)[-1]
-        idx = f["binary_data"].attrs[flname]
+        file_index = f["binary_data"].attrs
+        if flname not in file_index:
+            raise IndexError(f"{flname} not in {h5path}!")
+        idx = file_index[flname]
         bin_data = f["binary_data"][idx]
     return BytesIO(bin_data)
 

@@ -146,7 +146,6 @@ class CO3DSubmission:
         else:
             return True
 
-
     def add_result(
         self,
         category: str,
