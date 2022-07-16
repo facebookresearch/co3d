@@ -87,7 +87,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
     # Obtain the CO3Dv2 dataset map
     dataset_map = get_dataset_map(dataset_root, category, subset_name)
 
-    if task==CO3DTask.MANY_VIEW:
+    if task==CO3DTask.MANY_VIEW and not cheat_with_gt_data:
         # Obtain the point cloud of the corresponding evaluation sequence
         # by unprojecting depth maps of the known training views in the sequence:
         train_dataset = dataset_map["train"]
@@ -131,18 +131,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
         # sanity check that the eval frame data has correctly redacted entries
         _check_valid_eval_frame_data(eval_frame_data, task, sequence_set)
 
-        if task==CO3DTask.MANY_VIEW:
-            # we use the sequence pointcloud extracted above
-            scene_pointcloud = sequence_pointcloud
-        elif task==CO3DTask.FEW_VIEW:
-            # we build the pointcloud by unprojecting the depth maps of the known views
-            # which are elements (1:end) of the eval batch
-            scene_pointcloud = dbir_utils.get_eval_frame_data_pointcloud(
-                eval_frame_data,
-            )
-        else:
-            raise ValueError(task)
-
+        
         if cheat_with_gt_data:
             # Cheat by taking the ground truth data. This should give in perfect metrics.
             mask_render = (eval_frame_data.fg_probability[:1] > 0.5).float()
@@ -151,7 +140,19 @@ def update_dbir_submission_with_category_and_subset_predictions(
                 image_render = eval_frame_data.image_rgb[:1] * mask_render,
                 mask_render = mask_render,
             )
+
         else:
+            if task==CO3DTask.MANY_VIEW:
+                # we use the sequence pointcloud extracted above
+                scene_pointcloud = sequence_pointcloud
+            elif task==CO3DTask.FEW_VIEW:
+                # we build the pointcloud by unprojecting the depth maps of the known views
+                # which are elements (1:end) of the eval batch
+                scene_pointcloud = dbir_utils.get_eval_frame_data_pointcloud(
+                    eval_frame_data,
+                )
+            else:
+                raise ValueError(task)
             # Redact the frame data so we are sure we cannot use the data
             # from the actual unobserved evaluation sample
             eval_frame_data = redact_eval_frame_data(eval_frame_data)
