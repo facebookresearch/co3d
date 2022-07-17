@@ -157,7 +157,7 @@ def evaluate_file_folders(
     gt_folder: str,
     num_workers: int = 0,
     remaining_time: float = float("Inf"),
-    print_per_example_result: bool = True,
+    print_per_example_results: bool = True,
 ):
     # determine how much time do we have for the evaluation
     max_time = time.time() + remaining_time 
@@ -183,7 +183,7 @@ def evaluate_file_folders(
                     ground_truth_files[gt_example],
                     user_submission_files[gt_example],
                     max_time,
-                    print_per_example_result,
+                    print_per_example_results,
                 )
             ) for gt_example in tqdm(list(ground_truth_files))
         ]    
@@ -199,7 +199,7 @@ def evaluate_file_folders(
                 ground_truth_files[gt_example],
                 user_submission_files[gt_example],
                 max_time,
-                print_per_example_result,
+                print_per_example_results,
             ) for gt_example in list(ground_truth_files)
         ]
         pool = multiprocessing.Pool(num_workers)

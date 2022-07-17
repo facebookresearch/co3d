@@ -802,7 +802,7 @@ class CO3DSubmission:
                 logger.info(f"{category}/{subset_name} result: {eval_result_string}")
 
             subset_eval_time = time.time() - subset_eval_start
-            logger.info(f"Evaluated {category}/{subset_name} in {subset_eval_time:.1f}")
+            logger.info(f"Evaluated {category}/{subset_name} in {subset_eval_time:.1f} sec")
         
         
         # Get the average results.
