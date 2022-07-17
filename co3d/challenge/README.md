@@ -216,7 +216,7 @@ EvalAI server:
 
 6) Submit the resulting hdf5 file to the EvalAI submission server:
 
-    There are two options for submission, with option 1.1. strongly preferred:
+    There are two options for submission, with the first option strongly preferred:
     
     1. <b>(Preferred, please use this option) Submit the file using evalai command line interface:    
         1. Obtain your personal token from your EvalAI profile page:</b>
@@ -239,4 +239,4 @@ EvalAI server:
 
     2. (Avoid this option if possible, use only if a) fails.) Submit the file using the EvalAI submission page.
         1. Visit the [===> CO3D challenge submission page <===](https://eval.ai/web/challenges/challenge-page/1819/submission)
-        2. Submit the exported file HDF5 using the web interface.
+        2. Submit the exported HDF5 file using the web interface.

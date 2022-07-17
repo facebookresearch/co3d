@@ -106,6 +106,12 @@ python -m unittest
 ```
 
 
+# Reproducing results
+[Implicitron](https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer) is our open-source framework used to train all implicit shape learning methods from the CO3D paper.
+Please visit the following link for more details:
+https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer
+
+
 # Dataset format
 The dataset is organized in the filesystem as follows:
 
@@ -207,12 +213,6 @@ Note that the evaluation examples always come from the `"test"` part of the corr
 <b>The evaluation task</b> then consists of generating the first image in each batch given the knowledge of the other ones. Hence, the first image in each batch represents the (unseen) target frame, for which only the camera parameters are known, while the rest of the images in the batch are the known source frames whose cameras and colors are given.
 
 Note that for the Many-view task, where a user is given many known views of a particular sequence and the goal is to generate held-out views from the same sequence, `eval_batches_manyview_<sequence_set>_<sequence_id>.json` contain a single (target) frame per evaluation batch. Users can obtain the known views from the corresponding `"train"` list of frames in the set list `set_lists_manyview_<sequence_set>_<sequence_id>.json`.
-
-
-# Reproducing results
-[Implicitron](https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer) is our open-source framework used to train all implicit shape learning methods from the CO3D paper.
-Please visit the following link for more details:
-https://github.com/facebookresearch/pytorch3d/tree/main/projects/implicitron_trainer
 
 
 # PyTorch-independent usage
