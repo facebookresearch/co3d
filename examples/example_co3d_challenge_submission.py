@@ -70,8 +70,18 @@ def update_dbir_submission_with_category_and_subset_predictions(
     model extracted for a given category, and a dataset subset.
 
     Args:
-
+        submission: CO3DSubmission object.
+        dataset_root: Path to the root dataset folder containing CO3Dv2.
+        category: A CO3Dv2 category to evaluate.
+        subset_name: The name of the evaluation subset of the category.
+        num_workers: Number of processes to use for evaluation.
+        cheat_with_gt_data: If `True`, bypasses the DBIR stage and only simply
+            uses ground truth test data. This, of course, only works for the
+            development set which is not redacted.
+        load_dataset_pointcloud: If `True`, uses the ground truth dataset
+            pointclouds instead of unprojecting known views.
     """
+
     logger.info(
         "Runing depth-based image rendering (DBIR) new view synthesis "
         f"on category '{category}' subset '{subset_name}'"

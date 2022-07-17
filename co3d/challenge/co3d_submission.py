@@ -80,22 +80,146 @@ class CO3DSubmissionRender:
 
 
 class CO3DSubmission:
+    """
+    Maintains all data needed for a sucessful submission to the CO3D Challenge
+    evaluation server. The class can also locally evaluate predictions if
+    a local copy of the CO3Dv2 dataset is present.
+
+    See https://eval.ai/web/challenges/challenge-page/1819/overview for more details
+    about the challenge.
+
+
+    In order to create a CO3Dv2 submission, evaluate and submit the results, please follow
+    these steps:
+
+        1) Start by importing the `CO3DSubmission` class and instantiate a submission run.
+            For example, the following code:
+            ```python
+            from co3d.challenge.co3d_submission import CO3DSubmission
+            output_folder = "./co3d_submission_files"
+            task = CO3DTask.MANY_VIEW
+            sequence_set = CO3DSequenceSet.TEST
+            
+            submission = CO3DSubmission(
+                task=task
+                sequence_set=sequence_set,
+                output_folder=output_folder,
+                dataset_root=dataset_root,
+            )
+            ```
+            will instantiate a CO3D submission object `submission` that stores (and optionally
+            evaluates) results of the `manyview` task on the `test` set. All results will be
+            stored in the `output_folder`. Note that a user has to also specify the local root
+            folder of the CO3D dataset in `dataset_root`.
+
+        2) Obtain the dictionary of evaluation examples `eval_batches_map` from `submission`.
+            ```python
+            eval_batches_map = submission.get_eval_batches_map()
+            ```
+            here, `eval_batches_map` is a dictionary of the following form:
+            ```
+            {(category: str, subset_name: str): eval_batches}  # eval_batches_map
+            ```
+            where `eval_batches` look as follows:
+            ```python
+            [
+                [
+                    (sequence_name_0: str, frame_number_0: int),
+                    (sequence_name_0: str, frame_number_1: int),
+                    ...
+                    (sequence_name_0: str, frame_number_M_0: int),
+                ],
+                ...
+                [
+                    (sequence_name_N: str, frame_number_0: int),
+                    (sequence_name_N: str, frame_number_1: int),
+                    ...
+                    (sequence_name_N: str, frame_number_M_N: int),
+                ]
+            ]  # eval_batches
+            ```
+            Containing a list of `N` evaluation examples, each consisting of a tuple of 
+            `M_i` frames with numbers `frame_number_j` from a given sequence name `sequence_name_i`.
+            Note that the mapping between `frame_number` and `sequence_name` to the CO3D data
+            is stored in the respective `frame_annotations.jgz` and `sequence_annotation.jgz`
+            files in `<dataset_root>/<sequence_category>`.
+
+            For the <b>Many-view task</b> (`CO3DTask.MANYVIEW`), each evaluation batch has a single
+            (`M_i=1`) frame, which is the target evaluation frame.
+
+            For the <b>Few-view task</b> (`CO3DTask.FEWVIEW`), each batch has several frames (`M_i>1`),
+            where the first frame is the target frame which should be predicted given the knowledge
+            of the source frames that correspondond oto the 2nd-to-last elements of each batch.
+
+
+        3) Next we iterate over eval_batches, predict new views, and store our predictions
+        with the `submission` object.
+            ```python
+            # iterate over evaluation subsets and categories
+            for (category, subset_name), eval_batches in eval_batches_map.items():
+                
+                # iterate over all evaluation examples of a given category and subset
+                for eval_batch in eval_batches:
+                    # parse the evaluation sequence name and target frame number from eval_batch
+                    sequence_name, frame_number = eval_batch[0][:2]
+                    
+                    # `predict_new_view` is a user-defined function which generates
+                    # the test view (corresponding to the first element of the eval batch)
+                    image, depth, mask = predict_new_view(eval_batch, ...)  
+                    
+                    # add the render to the submission
+                    submission.add_result(
+                        category=category,
+                        subset_name=subset_name,
+                        sequence_name=sequence_name,
+                        frame_number=frame_number,
+                        image=image,
+                        mask=mask,
+                        depth=depth,
+                    )
+            ```
+
+        4) Export the submission object to a hdf5 file that can be uploaded to the EvalAI server:
+            ```
+            submission.export_results()
+            ```
+
+        5) Submit the submission to the EvalAI server:
+            ```
+            submission.submit_to_eval_ai()
+            ```
+
+    """
+
+
     def __init__(
         self,
         task: CO3DTask,
         sequence_set: CO3DSequenceSet,
         output_folder: str,
         dataset_root: Optional[str] = None,
-        server_data_folder: Optional[str] = None,
-        on_server: bool = False,
         eval_ai_personal_token: Optional[str] = EVAL_AI_PERSONAL_TOKEN,
-        export_format: str = "hdf5",  # hdf5
+        export_format: str = "hdf5",
+        # ---- the following are only for internal use, do not modify ----
+        on_server: bool = False,
+        server_data_folder: Optional[str] = None,
     ):
         """
-        TODO
+        Initialize the CO3DSubmission object.
         
-        eval_ai_personal_token: A personal eval_ai token. Required for enabling cli
+        task: The CO3D task=track:
+            `CO3DTask.manyview` for the "Many-view" task.
+            `CO3DTask.fewview` for the "Few-view" task.
+        sequence_set: The challenge sequence set.
+            `CO3DSequenceSet.dev` for the development set.
+            `CO3DSequenceSet.test` for the test set.
+        output_folder: The folder containing all outputs needed for the challenge submission.
+        dataset_root: The path to the root folder of a local copy of the CO3Dv2 dataset.
+        eval_ai_personal_token: A personal eval_ai token. Required for the cli
             submission with `self.submit_to_eval_ai`.
+        export_format: The format of the exported archive. Currently only "hdf5" is supported.
+        server_data_folder: (Internal-use-only)
+        on_server: (Internal-use-only)
         """
         self.task = task
         self.sequence_set = sequence_set
@@ -270,6 +394,10 @@ class CO3DSubmission:
             os.remove(self.submission_archive)
 
     def validate_export_results(self):
+        """
+        Validate the submission by checking whether all required prediction files
+        are present.
+        """
         if self.dataset_root is None or not os.path.isdir(self.dataset_root):
             raise ValueError(
                 "For validating the results, dataset_root has to be defined"
@@ -515,7 +643,18 @@ class CO3DSubmission:
 
 
     def evaluate(self, num_workers: int = 0):
-        if self.on_server:
+        """
+        Locally evaluate the submission. Please not that this is possible only
+        on the unredacted development set.
+        """
+
+        if not self.on_server:
+            if not os.path.isdir(self.dataset_root):
+                raise ValueError("For evaluation dataset_root has to be specified.")
+            if self.sequence_set == CO3DSequenceSet.TEST:
+                raise ValueError("Cannot evaluate on the hidden test set!")
+        else:
+            # server-side evaluation, do not use
             if (
                 self.server_data_folder is not None
                 and os.path.isfile(self.server_data_folder)
@@ -545,12 +684,7 @@ class CO3DSubmission:
                 raise ValueError(
                     "For evaluation on the server server_data_folder has to be specified."
                 )
-        else:
-            if not os.path.isdir(self.dataset_root):
-                raise ValueError("For evaluation dataset_root has to be specified.")
-            if self.sequence_set == CO3DSequenceSet.TEST:
-                raise ValueError("Cannot evaluate on the hidden test set!")
-
+            
         eval_batches_map = self.get_eval_batches_map()
 
         # buffers for results and exceptions
