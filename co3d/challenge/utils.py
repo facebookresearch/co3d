@@ -146,8 +146,9 @@ def _evaluate_pred_gt_pair(args: Tuple[str, str, str, float, bool]):
             raise ValueError(f"{gt_example} - {k} is does not have a finite value.")
     if print_status:
         msg = "; ".join([f"{k}={v:.3f}" for k, v in eval_result_one.items()])
+        sz = str(list(gt_rgbda.image.shape[-2:])).replace(" ", "")
         logger.info(
-            f"eval_one({gt_example}): {msg}; {max_time-cur_time:.1f} sec left"
+            f"eval_one({gt_example}-[{sz}]): {msg}; {max_time-cur_time:.1f} sec left"
         )
     return eval_result_one
     
