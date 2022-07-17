@@ -67,7 +67,6 @@ camera parameters are given.
     image and the ground truth image masked with the foreground mask (<tt>PSNR_masked</tt>).
 </p>
 
-
 <p>
     <b><tt>PSNR_masked</tt> - </b>
     Since we are interested only in reconstructing the objects in the
@@ -109,6 +108,12 @@ camera parameters are given.
     masks, users are free to generate placeholder depth and mask predictions. Of course,
     this will lead to a low performance in <tt>depth_abs_fg</tt> or <tt>IoU</tt>.
 </i>
+
+<p>
+The following image illustrates the <tt>PSNR</tt> and <tt>IoU</tt> metrics:<br>
+<img src="./eval_visuals.png" alt="evaluation viusalisation" width="1000">>
+</p>
+
 </p>
 
 
