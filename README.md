@@ -57,6 +57,9 @@ python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER --si
 
 
 # Common Objects in 3D Challenge
+<center>
+<img src="./co3d/challenge/co3d_challenge_logo.png" width="400" />
+</center>
 Together with releasing v2 of the dataset, we also organize the Common Objects in 3D Challenge hosted on EvalAI.
 Please visit the [challenge website](https://eval.ai/web/challenges/challenge-page/1819/overview) and [challenge README](./co3d/challenge/README.md) for the more information.
 

@@ -1,3 +1,8 @@
+<center>
+<img src="./co3d_challenge_logo.png" width="400" />
+</center>
+
+
 Common Objects in 3D Challenge
 ==============================
 
