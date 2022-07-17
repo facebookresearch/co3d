@@ -678,9 +678,9 @@ class CO3DSubmission:
             ):
                 # this is ok, we allow hdf5 files here
                 logger.info(f"Server folder {self.server_data_folder} is a HDF5 file!")
-                with open(self.server_data_folder,'rb') as f:
-                    md5hash = hashlib.md5(f.read()).hexdigest()
-                logger.info(f"HDF5 file hash = {md5hash}")
+                # with open(self.server_data_folder,'rb') as f:
+                #     md5hash = hashlib.md5(f.read()).hexdigest()
+                # logger.info(f"HDF5 file hash = {md5hash}")
             elif (
                 self.server_data_folder is not None
                 and self.server_data_folder.endswith(".dbm")
