@@ -235,6 +235,9 @@ def get_category_to_subset_name_list(
         c: l for c, l in category_to_subset_name_list.items() if len(l) > 0
     }
 
+    # sort by category
+    category_to_subset_name_list = dict(sorted(category_to_subset_name_list.items()))
+
     return category_to_subset_name_list
 
 

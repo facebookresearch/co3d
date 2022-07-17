@@ -29,7 +29,6 @@ from co3d.dataset.utils import redact_eval_frame_data, _check_valid_eval_frame_d
 
 DATASET_ROOT = os.getenv("CO3DV2_DATASET_ROOT")
 DATASET_ROOT_HIDDEN = os.getenv("CO3DV2_HIDDEN_DATASET_ROOT")
-EVAL_AI_PERSONAL_TOKEN = os.getenv("EVAL_AI_PERSONAL_TOKEN")
 
 
 logger = logging.getLogger(__name__)
@@ -64,6 +63,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
     subset_name: str,
     num_workers: int = 12,
     cheat_with_gt_data: bool = True,
+    load_dataset_pointcloud: bool = False,
 ):
     """
     Updates the CO3DSubmission object `submission` with predictions of a DBIR
@@ -95,6 +95,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
         sequence_pointcloud = dbir_utils.get_sequence_pointcloud(
             train_dataset,
             sequence_name,
+            load_dataset_pointcloud=load_dataset_pointcloud,
         )
         # Move the pointcloud to the right device
         sequence_pointcloud = sequence_pointcloud.to(device)
@@ -241,7 +242,6 @@ def make_dbir_submission(
         sequence_set=sequence_set,
         output_folder=submission_output_folder,
         dataset_root=DATASET_ROOT,
-        eval_ai_personal_token=EVAL_AI_PERSONAL_TOKEN,
     )
     
     if task==CO3DTask.FEW_VIEW and submission.has_only_single_sequence_subset():
@@ -291,9 +291,10 @@ def make_dbir_submission(
     submission.export_results(validate_results=True)
 
     if submit_to_eval_ai:
+        # submit the results to the EvalAI server.
         submission.submit_to_eval_ai()
 
-    # sanity check - reevaluate the zip file and copare results
+    # sanity check - reevaluate the archive file and copare results
     # submission_reeval = CO3DSubmission(
     #     task=task,
     #     sequence_set=sequence_set,
@@ -319,5 +320,5 @@ if __name__ == "__main__":
                 cheat_with_gt_data=False,
                 fill_results_from_cache=False,
                 skip_evaluation=False,
-                submit_to_eval_ai=False,
+                submit_to_eval_ai=True,
             )

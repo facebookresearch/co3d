@@ -10,10 +10,12 @@ See example code for creating a CO3DC submission in:
 ```
 Note that the codebase also requires the latest PyTorch3D installation.
 
-After running the evaluation code, please send the produced .zip file to the
+After running the evaluation code, please send the produced .hdf5 file to the
 EvalAI evaluation server:
 
 [===> CO3D challenge submission page  <===](https://eval.ai/web/challenges/challenge-page/1819/submission)
+
+Note that submission using the `evalai` CLI interface is strongly encouraged.
 
 
 # CO3D challenge overview
@@ -49,6 +51,60 @@ target view. For each source view, the corresponding color image,
 foreground segmentation mask, and camera parameters are given.
 Given this information, the goal is to generate the target view, for which only the
 camera parameters are given.
+
+### Evaluation metrics
+
+<h5><tt>PSNR_masked</tt> - The main evaluation metric</h5>
+<p>
+    The submissions are primarilly evaluated in terms of the color prediction accuracy
+    measured by evaluation the Peak-signal-to-ratio metric (PSNR) between the predicted
+    image and the ground truth image masked with the foreground mask.
+</p>
+
+
+<p>
+    <b><tt>PSNR_masked - </tt></b>
+    Since we are interested only in reconstructing the objects in the
+    foreground, the ground truth target view for <tt>PSNR_masked</tt> consists of the original
+    ground truth image masked using a foreground mask to produce an image containing
+    the object of interest with a black background. 
+    <b>Note that this requires each submission to generate renders that only contain the
+    foreground object with the background regions colored with <i>black</i> color</b>.
+</p>
+
+<h5>Additional image metrics - <tt>PSNR_fg</tt> and <tt>PSNR_full</tt></h5>
+<p>
+    Together with <tt>PSNR_masked</tt>, we also calculate <tt>PSNR_full</tt> and <tt>PSNR_fg</tt>. 
+    PSNR_fg restricts the evaluation only to the foreground pixels as defined by the
+    foreground segmentation mask.
+    <tt>PSNR_full</tt> evaluates PSRN between the original unmasked image and the predicted one.
+</p>
+
+<h5>Mask metrics - <tt>IoU</tt></h5>
+<p>
+    Each submision is also required to generate the a binary mask denoting the
+    regions of the image that are occupied by the object. The <tt>IoU</tt> evaluation metric
+    then computes the Intersection-over-Union between the predicted foreground
+    region and the ground truth foreground mask.
+</p>
+
+<h5>Depth metrics - <tt>depth_abs_fg</tt></h5>
+<p>
+    Finally, each submission should produce the render the depth render which comprises
+    the z-component of each pixel's point location in the camera coordinates.
+    The rendered depth is compared to the ground truth one using the absolute depth error
+    metric. Note that the depth is computed only for the foreground pixels as defined
+    by the ground truth segmentation mask.
+</p>
+
+<hr>
+<p style="background-color:FloralWhite"><i>
+    Note that if an evaluated method is not able to produce depth maps or segmentation
+    masks, users are free to generate placeholder depth and mask predictions. Of course,
+    this will lead to a low performance in <tt>depth_abs_fg</tt> or <tt>IoU</tt>.
+</i>
+</p>
+
 
 
 # CO3D challenge software framework
@@ -151,13 +207,35 @@ with the `submission` object.
             )
     ```
 
-5) Finally, we export the submission object to a zip file that can be uploaded to the
+5) Finally, we export the submission object to a hdf5 file that can be uploaded to the
 EvalAI server:
     ```
     submission.export_results()
     ```
 
-6) To submit an official evaluation entry, submit the resulting zip file to the
-EvalAI submission server:
+6) Submit the resulting hdf5 file to the EvalAI submission server:
 
-[===> CO3D challenge submission page  <===](https://eval.ai/web/challenges/challenge-page/1819/submission)
+    There are two options for submission, with option 1.1. strongly preferred:
+    
+    1. <b>(Preferred, please use this option) Submit the file using evalai command line interface:    
+        1. Obtain your personal token from your EvalAI profile page:</b>
+            
+            Go to https://eval.ai/web/profile, then click on 'Get your Auth Token' button.
+            Click on "Show Token" and copy-paste the revealed token.
+        2. Set the environment variable EVAL_AI_PERSONAL_TOKEN to your personal token.
+            ```bash
+            export EVAL_AI_PERSONAL_TOKEN=<your_eval_ai_auth_token>
+            ```
+        3. Install EvalAI command line interface:
+            ```bash
+            pip install evalai
+            ```
+        4. Submit the results to the EvalAI evaluation server by calling the
+            `submit_to_eval_ai()` of your CO3D `submission` object:
+            ```python
+            submission.submit_to_eval_ai()
+            ```
+
+    2. (Avoid this option if possible, use only if a) fails.) Submit the file using the EvalAI submission page.
+        1. Visit the [===> CO3D challenge submission page <===](https://eval.ai/web/challenges/challenge-page/1819/submission)
+        2. Submit the exported file HDF5 using the web interface.

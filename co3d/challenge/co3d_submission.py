@@ -40,6 +40,8 @@ CO3D_PHASE_ID = {
     (CO3DTask.FEW_VIEW, CO3DSequenceSet.TEST): 3544,
 }
 
+EVAL_AI_PERSONAL_TOKEN = os.getenv("EVAL_AI_PERSONAL_TOKEN")
+
 
 logger = logging.getLogger(__file__)
 
@@ -85,8 +87,8 @@ class CO3DSubmission:
         dataset_root: Optional[str] = None,
         server_data_folder: Optional[str] = None,
         on_server: bool = False,
-        eval_ai_personal_token: Optional[str] = None,
-        export_format: str = "hdf5",  # zip | hdf5
+        eval_ai_personal_token: Optional[str] = EVAL_AI_PERSONAL_TOKEN,
+        export_format: str = "hdf5",  # hdf5
     ):
         """
         TODO
@@ -392,6 +394,10 @@ class CO3DSubmission:
         # zip the directory
         logger.info(f"Archiving {self.submission_cache} to {self.submission_archive}.")
         if self.export_format=="zip":
+            raise ValueError(
+                f"Please export the data using the 'hdf5' format."
+                f"'zip' is no longer supported.""
+            )
             # First we need to remove all links to the ground truth directories
             # that were potentially created during a call to self.evaluate().
             self._clear_gt_links()
@@ -418,7 +424,7 @@ class CO3DSubmission:
             f"\n\nAlternatively, you can run submission.submit_to_eval_ai() to directly"
             f" submit the results file using EvalAI-cli (command line interface)."
             f" For the latter, make sure to `pip install evalai` and to set"
-            f" self.eval_ai_personal_token to a correct value."
+            f" EVAL_AI_PERSONAL_TOKEN to a correct value."
         )
 
     def _clear_gt_links(self):

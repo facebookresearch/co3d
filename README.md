@@ -17,7 +17,7 @@ The original dataset has been introduced in our ICCV'21 paper: [Common Objects i
 
 
 ## New features in CO3Dv2
-- [Common Objects in 3D Challenge](https://ngr-co3d.github.io/) which allows transparent evaluation on a hidden test server
+- <b>[Common Objects in 3D Challenge]((https://eval.ai/web/challenges/challenge-page/1819/overview) which allows transparent evaluation on a hidden test server</b>
 - 2x larger number of sequences, and 4x larger number of frames
 - Improved image quality - less blocky artifacts due to better video decoding
 - Improved segmentation masks - stable tracking of the main foreground object without jumping to background objects
@@ -58,7 +58,7 @@ python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER --si
 
 # Common Objects in 3D Challenge
 Together with releasing v2 of the dataset, we also organize the Common Objects in 3D Challenge hosted on EvalAI.
-Please visit the [challenge website](https://ngr-co3d.github.io/) and [challenge README](./co3d/challenge/README.md) for the more information.
+Please visit the [challenge website](https://eval.ai/web/challenges/challenge-page/1819/overview) and [challenge README](./co3d/challenge/README.md) for the more information.
 
 
 # Installation

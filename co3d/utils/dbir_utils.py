@@ -95,7 +95,7 @@ def get_sequence_pointcloud(
     sequence_name: str,
     num_workers: int = 12,
     max_loaded_frames: int = 50,
-    max_n_points: int = int(3e4),
+    max_n_points: int = int(1e5),
     seed: int = 42,
     load_dataset_pointcloud: bool = False,
 ) -> Pointclouds:
