@@ -637,7 +637,12 @@ class CO3DSubmission:
             return float("Inf")
 
 
-    def evaluate_archive_file(self, archive_path: str, num_workers: int = 0):
+    def evaluate_archive_file(
+        self,
+        archive_path: str,
+        num_workers: int = 0,
+        print_per_example_results: bool = False,
+    ):
         """
         Extract a file with exported results `archive_path` and evaluate.
         
@@ -655,10 +660,17 @@ class CO3DSubmission:
             raise ValueError(f"Unknown export format {self.export_format}")
         logger.info(f"Filling results from cache {self.submission_cache}.")
         self.fill_results_from_cache()
-        return self.evaluate(num_workers=num_workers)
+        return self.evaluate(
+            num_workers=num_workers,
+            print_per_example_results=print_per_example_results,
+        )
 
 
-    def evaluate(self, num_workers: int = 0):
+    def evaluate(
+        self,
+        num_workers: int = 0,
+        print_per_example_results: bool = False,
+    ):
         """
         Locally evaluate the submission. Please not that this is possible only
         on the unredacted development set.
@@ -708,9 +720,13 @@ class CO3DSubmission:
         eval_exceptions = {}
         eval_results = {}
 
+        
         for subset_i, ((category, subset_name), eval_batches) in enumerate(
             eval_batches_map.items()
         ):
+
+            subset_eval_start = time.time()
+
             logger.info(
                 f"Evaluating {category}/{subset_name} ({subset_i}/{len(eval_batches_map)})."
             )
@@ -728,7 +744,7 @@ class CO3DSubmission:
 
             # The case with no predicted results, or timed-out eval
             if (
-                (not os.path.isdir(pred_category_subset_dir))
+                (not os.path.isdir(pred_category_subset_dir)) 
                 or (len(os.listdir(pred_category_subset_dir))==0)
                 or self._is_timed_out()
             ):
@@ -770,6 +786,7 @@ class CO3DSubmission:
                     gt_category_subset_dir,
                     num_workers=num_workers,
                     remaining_time=self._get_remaining_submission_time(),
+                    print_per_example_results=print_per_example_results,
                 )
             except Exception as exc:
                 logger.warning(f"Evaluation of {category}/{subset_name} failed!", exc_info=True)
@@ -784,6 +801,10 @@ class CO3DSubmission:
                 ])
                 logger.info(f"{category}/{subset_name} result: {eval_result_string}")
 
+            subset_eval_time = time.time() - subset_eval_start
+            logger.info(f"Evaluated {category}/{subset_name} in {subset_eval_time:.1f}")
+        
+        
         # Get the average results.
         average_results = {}
         for m in EVAL_METRIC_NAMES:

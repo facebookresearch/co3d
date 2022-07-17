@@ -132,10 +132,10 @@ def get_result_directory_file_names(
 
     return result_files
 
-
-def _evaluate_pred_gt_pair(args: Tuple[str, str, str]):
-    gt_example, gt_file, pred_file, max_time = args
-    if time.time() > max_time:
+def _evaluate_pred_gt_pair(args: Tuple[str, str, str, float, bool]):
+    gt_example, gt_file, pred_file, max_time, print_status = args
+    cur_time = time.time()
+    if cur_time > max_time:
         raise ValueError("Timed out!")
     gt_rgbda = load_rgbda_frame(gt_file, check_for_depth_mask=True)
     pred_rgbda = load_rgbda_frame(pred_file)
@@ -144,6 +144,11 @@ def _evaluate_pred_gt_pair(args: Tuple[str, str, str]):
     for k, v in eval_result_one.items():
         if not np.isfinite(v):
             raise ValueError(f"{gt_example} - {k} is does not have a finite value.")
+    if print_status:
+        msg = "; ".join([f"{k}={v:.3f}" for k, v in eval_result_one.items()])
+        logger.info(
+            f"eval_one({gt_example}): {msg}; {max_time-cur_time:.1f} sec left"
+        )
     return eval_result_one
     
 
@@ -152,9 +157,10 @@ def evaluate_file_folders(
     gt_folder: str,
     num_workers: int = 0,
     remaining_time: float = float("Inf"),
+    print_per_example_result: bool = True,
 ):
     # determine how much time do we have for the evaluation
-    max_time = time.time() + remaining_time
+    max_time = time.time() + remaining_time 
 
     user_submission_files = get_result_directory_file_names(pred_folder)
     ground_truth_files = get_result_directory_file_names(gt_folder, has_depth_masks=True)
@@ -177,6 +183,7 @@ def evaluate_file_folders(
                     ground_truth_files[gt_example],
                     user_submission_files[gt_example],
                     max_time,
+                    print_per_example_result,
                 )
             ) for gt_example in tqdm(list(ground_truth_files))
         ]    
@@ -192,6 +199,7 @@ def evaluate_file_folders(
                 ground_truth_files[gt_example],
                 user_submission_files[gt_example],
                 max_time,
+                print_per_example_result,
             ) for gt_example in list(ground_truth_files)
         ]
         pool = multiprocessing.Pool(num_workers)
