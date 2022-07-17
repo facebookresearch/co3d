@@ -525,7 +525,7 @@ class CO3DSubmission:
         if self.export_format=="zip":
             raise ValueError(
                 f"Please export the data using the 'hdf5' format."
-                f"'zip' is no longer supported.""
+                f"'zip' is no longer supported."
             )
             # First we need to remove all links to the ground truth directories
             # that were potentially created during a call to self.evaluate().

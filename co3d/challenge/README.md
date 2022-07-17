@@ -103,18 +103,20 @@ camera parameters are given.
 </p>
 
 <hr>
-<p style="background-color:FloralWhite"><i>
+
+<p>
+    <i>
     Note that if an evaluated method is not able to produce depth maps or segmentation
     masks, users are free to generate placeholder depth and mask predictions. Of course,
     this will lead to a low performance in <tt>depth_abs_fg</tt> or <tt>IoU</tt>.
-</i>
+    </i>
+</p>
 
 <p>
-The following image illustrates the <tt>PSNR</tt> and <tt>IoU</tt> metrics:<br>
-<img src="./eval_visuals.png" alt="evaluation viusalisation" width="1000">>
+    The following image illustrates the <tt>PSNR</tt> and <tt>IoU</tt> metrics:<br>
+    <img src="./eval_visuals.png" alt="evaluation viusalisation" width="1000">>
 </p>
 
-</p>
 
 
 
