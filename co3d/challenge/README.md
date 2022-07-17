@@ -43,6 +43,7 @@ from the category-centric training data.
 ### CO3Dv2 Dataset
 
 The CO3Dv2 dataset provides all training and testing data needed for a submission.
+Please follow the [main README](https://github.com/facebookresearch/co3d/tree/main#readme) file to downlaod and install the dataset.
 
 ### Evaluation data
 
@@ -58,12 +59,12 @@ camera parameters are given.
 <p>
     The submissions are primarilly evaluated in terms of the color prediction accuracy
     measured by evaluation the Peak-signal-to-ratio metric (PSNR) between the predicted
-    image and the ground truth image masked with the foreground mask.
+    image and the ground truth image masked with the foreground mask (<tt>PSNR_masked</tt>).
 </p>
 
 
 <p>
-    <b><tt>PSNR_masked - </tt></b>
+    <b><tt>PSNR_masked</tt> - </b>
     Since we are interested only in reconstructing the objects in the
     foreground, the ground truth target view for <tt>PSNR_masked</tt> consists of the original
     ground truth image masked using a foreground mask to produce an image containing

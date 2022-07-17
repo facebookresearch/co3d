@@ -17,13 +17,23 @@ from pytorch3d.implicitron.tools.point_cloud_utils import (
 def render_point_cloud(
     camera: CamerasBase,
     render_size: Tuple[int, int],
-    sequence_pointcloud: Pointclouds,
+    pointcloud: Pointclouds,
     point_radius: float = 0.03,
 ) -> ImplicitronRender:
+    """
+    Render the point cloud `pointcloud` to the camera `camera` using the 
+    PyTorch3D point cloud renderer.
+
+    Args:
+        camera: Rendering camera.
+        render_size: 2-tuple of integers denoting the render size (HxW)
+        pointcloud: The point cloud to render.
+        point_radius: Radius of the rendered points.
+    """
     # render the sequence point cloud to each evaluation view
     data_rendered, render_mask, depth_rendered = render_point_cloud_pytorch3d(
         camera,
-        sequence_pointcloud,
+        pointcloud,
         render_size=render_size,
         point_radius=point_radius,
         topk=10,
@@ -43,6 +53,13 @@ def paste_render_to_original_image(
     frame_data: FrameData,
     render: ImplicitronRender,
 ) -> ImplicitronRender:
+    """
+    Paste a rendering result `render` into the original image coordinate frame.
+
+    Args:
+        frame_data: The `FrameData` object as returned by the `JsonIndexDataset`.
+        render: A render to be pasted into the original image coordinates.
+    """
     # size of the render
     render_size = render.image_render.shape[2:]
     
@@ -99,6 +116,20 @@ def get_sequence_pointcloud(
     seed: int = 42,
     load_dataset_pointcloud: bool = False,
 ) -> Pointclouds:
+    """
+    Given a `dataset` object and the name of a sequence in it (`sequence_name`),
+    generate a 3D pointcloud containing the main foreground object of the scene.
+
+    Args:
+        dataset: A dataset of containing sequence annotations.
+        sequence_name: The name of the sequence to reconstruct.
+        num_workers: Number of cores to use for loading the sequence data.
+        max_n_points: Maximum number of points to keep in the point cloud.
+        seed: Random seed for reproducibility.
+        load_dataset_pointcloud: If `True` uses the CO3D ground truth dataset
+            point cloud, otherwise generates the point cloud by unprojecting
+            the depth maps of known frames.
+    """
     with torch.random.fork_rng():  # fork rng for reproducibility
         torch.manual_seed(seed)
         sequence_pointcloud, _ = get_implicitron_sequence_pointcloud(
@@ -117,6 +148,14 @@ def get_eval_frame_data_pointcloud(
     eval_frame_data: FrameData,
     max_n_points: int = int(3e4),
 ):
+    """
+    Generate a pointcloud by unprojecting the known depth maps of a `FrameData` object
+    `eval_frame_data`. 
+
+    Args:
+        eval_frame_data: `FrameData` to unproject.
+        max_n_points: Maximum number of points to keep in the point cloud.
+    """
     batch_size = eval_frame_data.image_rgb.shape[0]
     pointcloud = get_rgbd_point_cloud(
         eval_frame_data.camera[list(range(1, batch_size))],

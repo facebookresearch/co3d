@@ -42,6 +42,7 @@ CO3D_PHASE_ID = {
 
 EVAL_AI_PERSONAL_TOKEN = os.getenv("EVAL_AI_PERSONAL_TOKEN")
 
+MAX_EXPORT_ARCHIVE_SIZE_GB = 2.0
 
 logger = logging.getLogger(__file__)
 
@@ -413,6 +414,13 @@ class CO3DSubmission:
             raise ValueError(f"Unknown export format {self.export_format}.")
 
         exported_file_size = os.path.getsize(self.submission_archive) / 1e9
+
+        if exported_file_size > MAX_EXPORT_ARCHIVE_SIZE_GB:
+            logger.warning(
+                f"The exported result file {self.submission_archive} is bigger"
+                f" than {exported_file_size} GB! Please ensure that your submission file"
+                f" is smaller to prevent submission upload failures."
+            )
 
         # finally export the result
         logger.warning(
