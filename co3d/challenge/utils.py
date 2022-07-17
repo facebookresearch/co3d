@@ -10,6 +10,7 @@ import glob
 import logging
 import multiprocessing
 import numpy as np
+import time
 
 from tqdm import tqdm
 from collections import defaultdict
@@ -133,7 +134,9 @@ def get_result_directory_file_names(
 
 
 def _evaluate_pred_gt_pair(args: Tuple[str, str, str]):
-    gt_example, gt_file, pred_file = args
+    gt_example, gt_file, pred_file, max_time = args
+    if time.time() > max_time:
+        raise ValueError("Timed out!")
     gt_rgbda = load_rgbda_frame(gt_file, check_for_depth_mask=True)
     pred_rgbda = load_rgbda_frame(pred_file)
     check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
@@ -144,7 +147,15 @@ def _evaluate_pred_gt_pair(args: Tuple[str, str, str]):
     return eval_result_one
     
 
-def evaluate_file_folders(pred_folder: str, gt_folder: str, num_workers: int = 0):
+def evaluate_file_folders(
+    pred_folder: str,
+    gt_folder: str,
+    num_workers: int = 0,
+    remaining_time: float = float("Inf"),
+):
+    # determine how much time do we have for the evaluation
+    max_time = time.time() + remaining_time
+
     user_submission_files = get_result_directory_file_names(pred_folder)
     ground_truth_files = get_result_directory_file_names(gt_folder, has_depth_masks=True)
 
@@ -165,6 +176,7 @@ def evaluate_file_folders(pred_folder: str, gt_folder: str, num_workers: int = 0
                     gt_example,
                     ground_truth_files[gt_example],
                     user_submission_files[gt_example],
+                    max_time,
                 )
             ) for gt_example in tqdm(list(ground_truth_files))
         ]    
@@ -179,6 +191,7 @@ def evaluate_file_folders(pred_folder: str, gt_folder: str, num_workers: int = 0
                 gt_example,
                 ground_truth_files[gt_example],
                 user_submission_files[gt_example],
+                max_time,
             ) for gt_example in list(ground_truth_files)
         ]
         pool = multiprocessing.Pool(num_workers)

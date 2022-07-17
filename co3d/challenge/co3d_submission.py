@@ -12,6 +12,7 @@ import errno
 import pickle
 import glob
 import hashlib
+import time
 from tabulate import tabulate
 
 from typing import Optional, Tuple, List
@@ -203,6 +204,7 @@ class CO3DSubmission:
         # ---- the following are only for internal use, do not modify ----
         on_server: bool = False,
         server_data_folder: Optional[str] = None,
+        max_processing_time: int = -1,
     ):
         """
         Initialize the CO3DSubmission object.
@@ -220,6 +222,7 @@ class CO3DSubmission:
         export_format: The format of the exported archive. Currently only "hdf5" is supported.
         server_data_folder: (Internal-use-only)
         on_server: (Internal-use-only)
+        max_processing_time: (Internal-use-only)
         """
         self.task = task
         self.sequence_set = sequence_set
@@ -229,6 +232,7 @@ class CO3DSubmission:
         self.on_server = on_server
         self.export_format = export_format
         self.eval_ai_personal_token = eval_ai_personal_token
+        self.max_processing_time = max_processing_time
 
         submission_archive_ext = self.export_format
         self.submission_archive = os.path.join(
@@ -620,6 +624,18 @@ class CO3DSubmission:
     def _fill_cache_from_hdf5(self, archive_path: str):
         make_hdf5_file_links(archive_path, self.submission_cache)
 
+    def _is_timed_out(self):
+        if self.max_processing_time > 0:
+            return (time.time() - self._eval_start_time) > self.max_processing_time
+        else:
+            return False
+
+    def _get_remaining_submission_time(self):
+        if self.max_processing_time > 0:
+            return self.max_processing_time - (time.time() - self._eval_start_time)
+        else:
+            return float("Inf")
+
 
     def evaluate_archive_file(self, archive_path: str, num_workers: int = 0):
         """
@@ -684,6 +700,7 @@ class CO3DSubmission:
                 raise ValueError(
                     "For evaluation on the server server_data_folder has to be specified."
                 )
+            self._eval_start_time = time.time()
             
         eval_batches_map = self.get_eval_batches_map()
 
@@ -698,18 +715,27 @@ class CO3DSubmission:
                 f"Evaluating {category}/{subset_name} ({subset_i}/{len(eval_batches_map)})."
             )
 
+            if self.max_processing_time > 0:
+                logger.info(
+                    f"Remaining submission time: {self._get_remaining_submission_time():1.2f}."
+                )
+
             pred_category_subset_dir = CO3DSubmission.get_submission_cache_image_dir(
                 self.submission_cache,
                 category,
                 subset_name,
             )
 
-            # The case with no predicted results.
+            # The case with no predicted results, or timed-out eval
             if (
                 (not os.path.isdir(pred_category_subset_dir))
                 or (len(os.listdir(pred_category_subset_dir))==0)
+                or self._is_timed_out()
             ):
-                logger.info(f"No evaluation predictions for {category}/{subset_name}")
+                if self._is_timed_out():
+                    logger.warning(f"Evaluation timed-out for {category}/{subset_name}!")
+                else:
+                    logger.info(f"No evaluation predictions for {category}/{subset_name}")
                 eval_results[(category, subset_name)] = (None, None)
                 eval_exceptions[(category, subset_name)] = None
                 continue
@@ -743,6 +769,7 @@ class CO3DSubmission:
                     pred_category_subset_dir,
                     gt_category_subset_dir,
                     num_workers=num_workers,
+                    remaining_time=self._get_remaining_submission_time(),
                 )
             except Exception as exc:
                 logger.warning(f"Evaluation of {category}/{subset_name} failed!", exc_info=True)
