@@ -64,6 +64,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
     num_workers: int = 12,
     cheat_with_gt_data: bool = True,
     load_dataset_pointcloud: bool = False,
+    point_radius: float = 0.01,
 ):
     """
     Updates the CO3DSubmission object `submission` with predictions of a DBIR
@@ -80,6 +81,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
             development set which is not redacted.
         load_dataset_pointcloud: If `True`, uses the ground truth dataset
             pointclouds instead of unprojecting known views.
+        point_radius: The radius of the rendered points.
     """
 
     logger.info(
@@ -173,7 +175,7 @@ def update_dbir_submission_with_category_and_subset_predictions(
                 eval_frame_data.camera[[0]],
                 eval_frame_data.image_rgb.shape[-2:],
                 scene_pointcloud,
-                point_radius=0.01,
+                point_radius=point_radius,
             )
 
         # cut the valid part of the render and paste into the original image canvas

@@ -559,12 +559,15 @@ class CO3DSubmission:
             f"Exported result file ({exported_file_size:.2f} GB):"
             f"\n\n    ===> {self.submission_archive} <==="
             f"\n\nYou can now submit the file to the EvalAI server:"
-            f"\n    https://eval.ai/web/challenges/challenge-page/1819/submission"
-            f" ('{self.task.value}-{self.sequence_set.value}' track)."
-            f"\n\nAlternatively, you can run submission.submit_to_eval_ai() to directly"
+            f" In order to do so, run submission.submit_to_eval_ai() to directly"
             f" submit the results file using EvalAI-cli (command line interface)."
             f" For the latter, make sure to `pip install evalai` and to set"
-            f" EVAL_AI_PERSONAL_TOKEN to a correct value."
+            f" the EVAL_AI_PERSONAL_TOKEN env. variable to your EvalAI Auth token."
+            f"\n\nAlternativelly, you can submit the file using the submission webpage:"
+            f" https://eval.ai/web/challenges/challenge-page/{CO3D_CHALLENGE_ID}/submission"
+            f" ('{self.task.value}-{self.sequence_set.value}' track)\n"
+            f"Please note a submission using the 'Upload file' option will fail"
+            f" due the large size of the file. Use the 'File URL' option instead."
         )
 
     def _clear_gt_links(self):

@@ -13,7 +13,6 @@ import torchvision
 from visdom import Visdom
 
 _CO3DV2_DATASET_ROOT: str = os.getenv("CO3DV2_DATASET_ROOT", "")
-# _CO3DV2_DATASET_ROOT: str = os.getenv("CO3D_DATASET_ROOT", "")
 
 
 from pytorch3d.implicitron.tools.point_cloud_utils import render_point_cloud_pytorch3d
@@ -80,7 +79,7 @@ class TestDatasetVisualize(unittest.TestCase):
             cameras,
             point_cloud,
             render_size=render_size,
-            point_radius=1e-2,
+            point_radius=2e-2,
             topk=10,
             bg_color=0.0,
             bin_size=0,
