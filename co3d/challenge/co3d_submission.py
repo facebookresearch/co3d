@@ -804,14 +804,27 @@ class CO3DSubmission:
             subset_eval_time = time.time() - subset_eval_start
             logger.info(f"Evaluated {category}/{subset_name} in {subset_eval_time:.1f} sec")
         
-        
+
+        # fill in missing eval results with blank prediction results        
+        for (category, subset_name), (eval_result, _) in eval_results.items():
+            if eval_result is None:
+                logger.info(
+                    f"Replacing metrics in {category}/{subset_name}"
+                    +" with a blank prediction result."
+                )
+                eval_result_ = {}
+                for m in EVAL_METRIC_NAMES:
+                    eval_result_[m] = _get_missing_metric_val(m)
+                    # eval_result_[m] = BLANK_PREDICTION_RESULTS[
+                    #     (self.task, self.sequence_set)
+                    # ][(category, subset_name)][m]
+                eval_results[(category, subset_name)] = eval_result_, None
+
         # Get the average results.
         average_results = {}
         for m in EVAL_METRIC_NAMES:
             average_results[m] = sum(
-                eval_result[m] 
-                if eval_result is not None else _get_missing_metric_val(m)
-                for eval_result, _ in eval_results.values()
+                eval_result[m] for eval_result, _ in eval_results.values()
             ) / len(eval_results)
         eval_results[("MEAN", "-")] = average_results, None
 
@@ -819,10 +832,7 @@ class CO3DSubmission:
         tab_rows = []
         for (category, subset_name), (eval_result, _) in eval_results.items():
             tab_row = [category, subset_name]
-            if eval_result is None:
-                tab_row.extend([_get_missing_metric_val(m) for m in EVAL_METRIC_NAMES])
-            else:
-                tab_row.extend([eval_result[k] for k in EVAL_METRIC_NAMES])
+            tab_row.extend([eval_result[k] for k in EVAL_METRIC_NAMES])
             tab_rows.append(tab_row)
 
         table_str = tabulate(

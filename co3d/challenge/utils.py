@@ -16,7 +16,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from typing import List, Dict, Tuple
 from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
-from .metric_utils import eval_one, EVAL_METRIC_NAMES
+from .metric_utils import eval_one, EVAL_METRIC_NAMES, Timer
 from .io import load_rgbda_frame
 
 
@@ -136,10 +136,17 @@ def _evaluate_pred_gt_pair(args: Tuple[str, str, str, float, bool]):
     gt_example, gt_file, pred_file, max_time, print_status = args
     cur_time = time.time()
     if cur_time > max_time:
-        raise ValueError("Timed out!")
+        raise ValueError(
+            "    @@@@@@@@@@@@@@@@@@@@@\n"
+            "    Evaluation timed out!\n"
+            "    @@@@@@@@@@@@@@@@@@@@@"
+        )
+    # with Timer("io"):
     gt_rgbda = load_rgbda_frame(gt_file, check_for_depth_mask=True)
     pred_rgbda = load_rgbda_frame(pred_file)
+    # with Timer("check"):
     check_same_rgbda_sizes(gt_rgbda, pred_rgbda, gt_example)
+    # with Timer("eval"):
     eval_result_one = eval_one(pred_rgbda, gt_rgbda)
     for k, v in eval_result_one.items():
         if not np.isfinite(v):

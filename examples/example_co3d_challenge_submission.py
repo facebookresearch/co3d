@@ -322,7 +322,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # iterate over all tasks and sequence sets
-    for sequence_set in [CO3DSequenceSet.DEV, CO3DSequenceSet.TEST]:
+    for sequence_set in [CO3DSequenceSet.DEV,]:
         for task in [CO3DTask.MANY_VIEW, CO3DTask.FEW_VIEW]:
             make_dbir_submission(
                 task=task,

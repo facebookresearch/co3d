@@ -7,6 +7,7 @@
 import math
 import numpy as np
 import logging
+import time
 from typing import Optional
 from typing import Tuple
 from .data_types import RGBDAFrame
@@ -65,6 +66,7 @@ def eval_one_rgbda(
         eval_result: a dictionary {metric_name: str: metric_value: float}
     """
 
+    # with Timer("start"):
     for xn, x in zip(
         ("image_rgb", "fg_mask", "depth_map"),
         (image_rgb, fg_mask, depth_map),
@@ -110,16 +112,22 @@ def eval_one_rgbda(
         ]
 
     gt_image_rgb_masked = gt_image_rgb * gt_fg_mask
+        
+    # with Timer("psnrs"):
     psnr_masked = calc_psnr(image_rgb, gt_image_rgb_masked)
     
     psnr_full_image = calc_psnr(image_rgb, gt_image_rgb)
     psnr_fg = calc_psnr(image_rgb, gt_image_rgb_masked, mask=gt_fg_mask)
+    
+    # with Timer("depth"):
     mse_depth, abs_depth, aux_depth = calc_mse_abs_depth(
         depth_map,
         gt_depth_map,
         gt_fg_mask,
         crop=5,
     )
+    
+    # with Timer("iou"):
     iou = calc_iou(fg_mask, gt_fg_mask)
 
     return {
@@ -319,3 +327,14 @@ def _get_bbox_from_mask(
 def _get_1d_bounds(arr: np.ndarray) -> Tuple[int, int]:
     nz = np.flatnonzero(arr)
     return nz[0], nz[-1]
+
+
+class Timer:
+    def __init__(self, name=None):
+        self.name = name if name is not None else "timer"
+
+    def __enter__(self):
+        self.start = time.time()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        logger.info(f"{self.name} - {time.time() - self.start:.3e} sec")
