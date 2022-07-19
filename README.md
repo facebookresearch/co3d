@@ -67,7 +67,8 @@ Please visit the [challenge website](https://eval.ai/web/challenges/challenge-pa
 # Installation
 This is a `Python 3` / `PyTorch` codebase.
 1) [Install `PyTorch`.](https://pytorch.org/)
-2) [Install `PyTorch3D`.](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md)
+2) [Install `PyTorch3D`.](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone)
+    - <b>Please note that Pytorch3D has to be built from source to enable the Implicitron module</b>
 3) Install the remaining dependencies in `requirements.txt`:
 ```
 pip install lpips visdom tqdm requests h5py 
@@ -77,7 +78,8 @@ pip install lpips visdom tqdm requests h5py
 
 ##  Dependencies
 - [`PyTorch`](https://pytorch.org/)
-- [`PyTorch3D`](https://github.com/facebookresearch/pytorch3d/blob/master/INSTALL.md)
+- [`PyTorch3D`](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone)
+    - <b>Please note that Pytorch3D has to be built from source to enable the Implicitron module</b>
 - [`tqdm`](https://pypi.org/project/tqdm/)
 - [`visdom`](https://github.com/facebookresearch/visdom)
 - [`lpips`](https://github.com/richzhang/PerceptualSimilarity)
