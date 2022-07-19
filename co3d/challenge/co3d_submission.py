@@ -22,6 +22,7 @@ import csv
 
 from co3d.challenge.metric_utils import EVAL_METRIC_NAMES, EVAL_METRIC_MISSING_VALUE
 
+from .blank_predictions_results import BLANK_PREDICTION_RESULTS
 from .utils import evaluate_file_folders, get_result_directory_file_names
 from .data_types import RGBDAFrame, CO3DTask, CO3DSequenceSet
 from .io import (
@@ -817,10 +818,11 @@ class CO3DSubmission:
                 )
                 eval_result_ = {}
                 for m in EVAL_METRIC_NAMES:
-                    eval_result_[m] = _get_missing_metric_val(m)
-                    # eval_result_[m] = BLANK_PREDICTION_RESULTS[
-                    #     (self.task, self.sequence_set)
-                    # ][(category, subset_name)][m]
+                    blank_render_metric_val = BLANK_PREDICTION_RESULTS[
+                        (self.task, self.sequence_set)
+                    ][(category, subset_name)][m]
+                    # eval_result_[m] = _get_missing_metric_val(m)
+                    eval_result_[m] = blank_render_metric_val
                 eval_results[(category, subset_name)] = eval_result_, None
 
         # Get the average results.
