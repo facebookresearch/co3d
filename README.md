@@ -17,7 +17,7 @@ The original dataset has been introduced in our ICCV'21 paper: [Common Objects i
 
 
 ## New features in CO3Dv2
-- <b>[Common Objects in 3D Challenge]((https://eval.ai/web/challenges/challenge-page/1819/overview) which allows transparent evaluation on a hidden test server</b>
+- <b>[Common Objects in 3D Challenge]((https://eval.ai/web/challenges/challenge-page/1819/overview) which allows transparent evaluation on a hidden test server - more details in the [challenge README](./co3d/challenge/README.md) </b>
 - 2x larger number of sequences, and 4x larger number of frames
 - Improved image quality - less blocky artifacts due to better video decoding
 - Improved segmentation masks - stable tracking of the main foreground object without jumping to background objects
