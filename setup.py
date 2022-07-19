@@ -9,7 +9,7 @@ import setuptools
 
 setuptools.setup(
     name="co3d",
-    version="2.0.0",
+    version="2.1.0",
     author="FAIR",
     author_email="dnovotny@fb.com",
     packages=setuptools.find_packages(exclude=["tests", "examples"]),
