@@ -78,8 +78,7 @@ pip install lpips visdom tqdm requests h5py
 
 ##  Dependencies
 - [`PyTorch`](https://pytorch.org/)
-- [`PyTorch3D`](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone)
-    - <b>Please note that Pytorch3D has to be built from source to enable the Implicitron module</b>
+- [`PyTorch3D`](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone) (built from source)
 - [`tqdm`](https://pypi.org/project/tqdm/)
 - [`visdom`](https://github.com/facebookresearch/visdom)
 - [`lpips`](https://github.com/richzhang/PerceptualSimilarity)
