@@ -71,7 +71,7 @@ This is a `Python 3` / `PyTorch` codebase.
     - <b>Please note that Pytorch3D has to be built from source to enable the Implicitron module</b>
 3) Install the remaining dependencies in `requirements.txt`:
 ```
-pip install lpips visdom tqdm requests h5py 
+pip install visdom tqdm requests h5py 
 ```
 4) Install the CO3D package itself: `pip install -e .`
 
@@ -81,7 +81,6 @@ pip install lpips visdom tqdm requests h5py
 - [`PyTorch3D`](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone) (built from source)
 - [`tqdm`](https://pypi.org/project/tqdm/)
 - [`visdom`](https://github.com/facebookresearch/visdom)
-- [`lpips`](https://github.com/richzhang/PerceptualSimilarity)
 - [`requests`](https://docs.python-requests.org/en/master/)
 - ['h5py'](http://www.h5py.org/)
 
