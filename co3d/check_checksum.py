@@ -20,13 +20,18 @@ SHA256S_FILE = os.path.join(os.path.dirname(__file__), "co3d_sha256.json")
 BLOCKSIZE = 65536
 
 
-def main(download_folder: str, dump: bool = False, n_sha256_workers: int = 4):
+def main(
+    download_folder: str,
+    dump: bool = False,
+    n_sha256_workers: int = 4,
+    single_sequence_subset: bool = False,
+):
     zipfiles = sorted(glob.glob(os.path.join(download_folder, "*.zip")))
     print(f"Extracting SHA256 hashes for {len(zipfiles)} files in {download_folder}.")
     extracted_sha256s_list = []
-    with Pool(processes=n_sha256_workers) as download_pool:
+    with Pool(processes=n_sha256_workers) as sha_pool:
         for extracted_hash in tqdm(
-            download_pool.imap(sha256_file, zipfiles),
+            sha_pool.imap(_sha256_file_and_print, zipfiles),
             total=len(zipfiles),
         ):
             extracted_sha256s_list.append(extracted_hash)
@@ -42,7 +47,9 @@ def main(download_folder: str, dump: bool = False, n_sha256_workers: int = 4):
         with open(SHA256S_FILE, "w") as f:
             json.dump(extracted_sha256s, f, indent=2)
 
-    expected_sha256s = get_expected_sha256s()
+    expected_sha256s = get_expected_sha256s(
+        single_sequence_subset=single_sequence_subset
+    )
 
     missing_keys, invalid_keys = [], []
     for k in expected_sha256s.keys():
@@ -98,6 +105,13 @@ def sha256_file(path: str):
     return digest_
 
 
+def _sha256_file_and_print(path: str):
+    digest_ = sha256_file(path)
+    print(f"{path}: {digest_}")
+    return digest_
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Check SHA256 hashes of the CO3D dataset."
@@ -118,9 +132,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Store sha256s hashes.",
     )
+    parser.add_argument(
+        "--single_sequence_subset",
+        action="store_true",
+        default=False,
+        help="Check the single-sequence subset of the dataset.",
+    )
+
     args = parser.parse_args()
     main(
         str(args.download_folder),
         dump=bool(args.dump_sha256s),
         n_sha256_workers=int(args.num_workers),
+        single_sequence_subset=bool(args.single_sequence_subset),
     )
