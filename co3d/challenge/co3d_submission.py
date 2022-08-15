@@ -724,7 +724,6 @@ class CO3DSubmission:
         eval_exceptions = {}
         eval_results = {}
 
-        
         for subset_i, ((category, subset_name), eval_batches) in enumerate(
             eval_batches_map.items()
         ):
@@ -853,7 +852,7 @@ class CO3DSubmission:
             writer = csv.writer(f)
             writer.writerow(header)
             writer.writerows(tab_rows)
-
+    
         # Store the recorded exceptions in the submissions folder.
         with open(self.evaluate_exceptions_file, "wb") as f:
             pickle.dump(eval_exceptions, f)

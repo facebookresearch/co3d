@@ -63,6 +63,14 @@ def paste_render_to_original_image(
     # size of the render
     render_size = render.image_render.shape[2:]
     
+    # estimate render scale w.r.t. the frame_data images
+    render_scale_factors = [
+        sr / s for sr, s in zip(render_size, frame_data.image_rgb.shape[2:])
+    ]
+    assert abs(render_scale_factors[0]-render_scale_factors[1]) <= 1e-2, (
+        "non-isotropic render rescale"
+    )
+
     # original image size
     orig_size = frame_data.image_size_hw[0].tolist()
 
@@ -75,18 +83,25 @@ def paste_render_to_original_image(
     # get the valid part of the render
     render_bounds_wh = [None, None]
     for axis in [0, 1]:
+        # resize the mask crop to the size of the render
+        if render_size != frame_data.mask_crop.shape[2:]:
+            mask_crop_render_size = torch.nn.functional.interpolate(
+                frame_data.mask_crop, size=render_size, mode="nearest"
+            )
+        else:
+            mask_crop_render_size = frame_data.mask_crop
         # get the bounds of the mask_crop along dimemsion = 1-axis
-        valid_dim_pix = frame_data.mask_crop[0, 0].sum(dim=axis).reshape(-1).nonzero()
+        valid_dim_pix = mask_crop_render_size[0, 0].sum(dim=axis).reshape(-1).nonzero()
         assert valid_dim_pix.min()==0
         render_bounds_wh[axis] = valid_dim_pix.max().item() + 1
-
+    
     render_out = {}
     for render_type, render_val in dataclasses.asdict(render).items():
         if render_val is None:
             continue
         # get the valid part of the render
         render_valid_ = render_val[..., :render_bounds_wh[1], :render_bounds_wh[0]]
-        
+
         # resize the valid part to the original size
         render_resize_ = torch.nn.functional.interpolate(
             render_valid_,
@@ -104,6 +119,24 @@ def paste_render_to_original_image(
         ] = render_resize_
         render_out[render_type] = render_pasted_
         
+    # if True:
+    #     # debug visualize
+    #     from visdom import Visdom
+    #     viz = Visdom()
+    #     visdom_env = "debug_paste_render_to_original_image"
+    #     viz.image(
+    #         render.image_render[0],
+    #         env=visdom_env,
+    #         win="original",
+    #     )
+    #     viz.image(
+    #         render_out["image_render"][0],
+    #         env=visdom_env,
+    #         win="pasted",
+    #     )
+    #     import pdb; pdb.set_trace()
+    #     pass
+
     return ImplicitronRender(**render_out)
 
 
