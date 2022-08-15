@@ -55,7 +55,7 @@ def main(
             "fewview_test",
             "manyview_test",
             "fewview_dev",
-            "manview_dev",
+            "manview_dev_0",
         ]:
 
             if subset_name not in subset_name_list:
