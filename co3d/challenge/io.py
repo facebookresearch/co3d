@@ -11,6 +11,8 @@ import logging
 import numpy as np
 import dbm
 import functools
+import h5py
+
 from io import BytesIO
 from PIL import Image
 from typing import Optional, Callable, Dict, Union
@@ -21,12 +23,6 @@ from .data_types import CO3DSequenceSet, CO3DTask, RGBDAFrame
 logger = logging.getLogger(__file__)
 
 
-try:
-    import h5py
-except ImportError:
-    logger.debug("No h5py library - make sure not to evaluate on a server.")
-
-
 def store_rgbda_frame(rgbda_frame: RGBDAFrame, fl: str):
     assert np.isfinite(rgbda_frame.depth).all()
     store_mask(rgbda_frame.mask[0], fl + "_mask.png")
@@ -35,6 +31,21 @@ def store_rgbda_frame(rgbda_frame: RGBDAFrame, fl: str):
     if rgbda_frame.depth_mask is not None:
         store_1bit_png_mask(rgbda_frame.depth_mask[0], fl + "depth_mask.png")
 
+
+def link_rgbda_frame_files(fl_existing: str, fl_src_link: str):
+    for pfix in ["_mask.png", "_depth.png", "_image.png", "_depth_mask.png"]:
+        link_tgt = fl_existing+pfix
+        link_src = fl_src_link+pfix
+        if os.path.islink(link_src):
+            os.remove(link_src)
+        if not os.path.isfile(link_tgt):
+            if pfix=="_depth_mask.png":
+                pass
+            else:
+                raise ValueError(f"Target file {link_tgt} does not exist!")
+        else:
+            os.symlink(link_tgt, link_src)
+        
 
 def load_rgbda_frame(fl: str, check_for_depth_mask: bool = False) -> RGBDAFrame:
     f = RGBDAFrame(

@@ -31,6 +31,7 @@ from .io import (
     export_result_file_dict_to_hdf5,
     make_hdf5_file_links,
     link_file_to_db_file,
+    link_rgbda_frame_files,
 )
 
 
@@ -74,6 +75,9 @@ class CO3DSubmissionRender:
             ),
             self.get_image_name(),
         )
+
+    def get_hash(self):
+        return (self.category, self.subset_name, self.sequence_name, self.frame_number)
 
     def get_image_name(self):
         return get_submission_image_name(
@@ -261,7 +265,6 @@ class CO3DSubmission:
         """
         return os.path.join(output_folder, category, subset_name)
 
-
     def has_only_single_sequence_subset(self):
         """
         Returns:
@@ -323,6 +326,32 @@ class CO3DSubmission:
             res_file,
         )
 
+    def _link_existing_render(
+        self,
+        render_submission_cache: str,
+        render: CO3DSubmissionRender,
+    ) -> None:
+        """
+        Link a single stored existing render to the current submission.
+
+        Args:
+            render_submission_cache: The path to the submission cache of the render.
+            render: The linked render.
+        """
+        res = self._add_result_metadata(
+            render.category,
+            render.subset_name,
+            render.sequence_name,
+            render.frame_number,
+        )
+        rgbda_file_link_src = res.get_image_path(self.submission_cache)
+        rgbda_file_existing = render.get_image_path(render_submission_cache)
+        os.makedirs(os.path.dirname(rgbda_file_link_src), exist_ok=True)
+        logger.debug(
+            f"Linking submission file {rgbda_file_link_src} to {rgbda_file_existing}."
+        )
+        link_rgbda_frame_files(rgbda_file_existing, rgbda_file_link_src)
+        
     def _add_result_metadata(
         self,
         category: str,
@@ -338,6 +367,12 @@ class CO3DSubmission:
             rgbda_frame=None,
         )
         self._result_list.append(res)
+        # if res.get_hash() in [r.get_hash() for r in self._result_list]:
+        #     logger.warning(
+        #         f"{str(res.get_hash())} already in the result list! Skipping."
+        #     )
+        # else:
+        #     self._result_list.append(res)
         return res
 
     def _get_result_frame_index(self):
@@ -586,6 +621,28 @@ class CO3DSubmission:
             if not os.path.split(os.path.dirname(f))[-1].startswith("GT_")
         }
         export_result_file_dict_to_hdf5(self.submission_archive, result_dict)
+
+    def link_results_from_existing_output_folder(self, output_folder: str) -> None:
+        """
+        Link all results stored in a different output folder to the current
+        submission object.
+
+        Args:
+            output_folder: The output folder containing all results that will be
+                linked to the current submission object.
+        """
+        
+        other = CO3DSubmission(
+            task=self.task,
+            sequence_set=self.sequence_set,
+            output_folder=output_folder,
+        )
+        other.fill_results_from_cache()
+        for other_res in other._result_list:
+            self._link_existing_render(
+                os.path.join(output_folder, "submission_cache"),
+                other_res,
+            )
 
     def fill_results_from_cache(self):
         """

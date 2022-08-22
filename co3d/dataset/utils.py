@@ -41,26 +41,16 @@ def _check_valid_eval_frame_data(
             getattr(fd, k).abs().sum((1,2,3)) <= 0
             for k in ["image_rgb", "depth_map", "fg_probability"]
         ]
-    )        
-    if task==CO3DTask.MANY_VIEW:
-        if sequence_set==CO3DSequenceSet.TEST:
-            # everything has to be redacted
-            assert is_redacted.all()
-        elif sequence_set==CO3DSequenceSet.DEV:
-            # nothing should be redacted
-            assert not is_redacted.all()
-    elif task==CO3DTask.FEW_VIEW:
-        if sequence_set==CO3DSequenceSet.TEST:
-            # first image has to be redacted
-            assert is_redacted[:, 0].all()
-            # all depth maps have to be redacted
-            assert is_redacted[1, :].all()
-            # no known views should be redacted
-            assert not is_redacted[:, 1:].all(dim=0).any()
-        elif sequence_set==CO3DSequenceSet.DEV:
-            # nothing should be redacted
-            assert not is_redacted.all(dim=0).any()
-        else:
-            raise ValueError(sequence_set)
+    )
+    if sequence_set==CO3DSequenceSet.TEST:
+        # first image has to be redacted
+        assert is_redacted[:, 0].all()
+        # all depth maps have to be redacted
+        assert is_redacted[1, :].all()
+        # no known views should be redacted
+        assert not is_redacted[:, 1:].all(dim=0).any()
+    elif sequence_set==CO3DSequenceSet.DEV:
+        # nothing should be redacted
+        assert not is_redacted.all(dim=0).any()
     else:
-        raise ValueError(task)
+        raise ValueError(sequence_set)

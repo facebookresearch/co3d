@@ -14,7 +14,7 @@ import os
 import torch
 import json
 import warnings
-from typing import Optional
+from typing import Optional, Union, Dict, Tuple
 from tqdm import tqdm
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
@@ -49,7 +49,7 @@ from co3d.challenge.utils import (
     get_co3d_sequence_set_from_subset_name,
 )
 from co3d.dataset.utils import redact_eval_frame_data, _check_valid_eval_frame_data
-
+from co3d.challenge.metric_utils import EVAL_METRIC_NAMES
 
 
 DATASET_ROOT = os.getenv("CO3DV2_DATASET_ROOT")
@@ -66,32 +66,152 @@ from projects.implicitron_trainer.experiment import Experiment
 logger = logging.getLogger(__name__)
 
 
-def load_implicitron_config_from_exp_dir(implicitron_exp_dir: str):
-    cfg_filename = os.path.join(implicitron_exp_dir, "expconfig.yaml")
-    cfg_load = OmegaConf.load(cfg_filename)
-    cfg_default = get_default_args(Experiment)
-    cfg = OmegaConf.merge(cfg_default, cfg_load)
-    cfg.exp_dir = implicitron_exp_dir
-    return cfg
+def evaluate_implicitron_exp_dir_map(
+    category_subset_implicitron_exp_dirs: Union[Dict[Tuple[str, str], str], str],
+    task: CO3DTask,
+    sequence_set: CO3DSequenceSet,
+    submission_output_folder: str,
+    num_eval_workers: int = 4,
+    submit_to_eval_ai: bool = False,
+    skip_evaluation: bool = False,
+    fill_results_from_cache: bool = False,
+    implicitron_exp_dir_submission_output_subfolder: Optional[str] = None,
+):
+    """
+    Evalulates and submits to EvalAI either:
+        1) all Implicitron class-specific models, or
+        2) a single model trained for all categories.
+
+    Args:
+        category_subset_implicitron_exp_dirs: Two options:
+            1) a dict {(category_name, subset_name): implicitron_exp_dir_path} containing
+                a mapping from each CO3Dv2 category and subset to the path of the
+                corresponding implicitron model exp dir.
+            2) a string containing the path to a single model used for reconstructing
+                all categories.
+        task: The co3d task - either CO3DTask.MANY_VIEW or CO3DTask.FEW_VIEW.
+        sequence_set: The sequence set to evaluate on:
+            CO3DSequenceSet.DEV for for the development set
+            CO3DSequenceSet.TEST for for the test set
+        submission_output_folder: Directory containing the submission output files.
+        num_eval_workers: Number of processes that conduct evaluation.
+        submit_to_eval_ai: If `True`, will automatically submit the exported result
+            archive to EvalAI using the CLI interface (needs to be installed with 
+            `pip install evalai`). This requires setting the EVAL_AI_PERSONAL_TOKEN 
+            environment variable to your personal EVAL_AI token.
+        skip_evaluation: Skip the local evaluation.
+        implicitron_exp_dir_submission_output_subfolder:
+            If set to a string, loads precomputed results from
+                ```
+                category_subset_implicitron_exp_dirs[(category, subset)]
+                /implicitron_exp_dir_submission_output_subfolder
+                ```
+            for each (category, subset).
+            Such precomputed results are typically output by:
+                ```
+                evaluate_implicitron_exp_dir(
+                    category_subset_implicitron_exp_dirs[(category, subset)],
+                    ...
+                )
+    """
+
+    submission = CO3DSubmission(
+        task=task,
+        sequence_set=sequence_set,
+        output_folder=submission_output_folder,
+        dataset_root=DATASET_ROOT,
+    )
+
+    if fill_results_from_cache:
+        submission.fill_results_from_cache()
+
+    else:
+
+        if not isinstance(category_subset_implicitron_exp_dirs, str):
+            # check that we have all models in case the we were given one model per 
+            # category/subset_name
+            for category, subset_name in submission.get_eval_batches_map():
+                if (category, subset_name) not in category_subset_implicitron_exp_dirs:
+                    raise ValueError(
+                        f"Missing implicitron exp dir for {category}/{subset_name}."
+                    )
+
+        for category, subset_name in submission.get_eval_batches_map():
+            if isinstance(category_subset_implicitron_exp_dirs, str):
+                # a single model that does it all
+                current_implicitron_exp_dir = category_subset_implicitron_exp_dirs
+            else:
+                # subset-specific models
+                current_implicitron_exp_dir = category_subset_implicitron_exp_dirs[
+                    (category, subset_name)
+                ]
+
+            if implicitron_exp_dir_submission_output_subfolder is not None:
+                submission.link_results_from_existing_output_folder(
+                    os.path.join(
+                        current_implicitron_exp_dir,
+                        implicitron_exp_dir_submission_output_subfolder,
+                    )
+                )
+
+            else:
+                update_implicitron_submission_with_category_and_subset_predictions(
+                    submission=submission,
+                    implicitron_exp_dir=current_implicitron_exp_dir,
+                    dataset_root=DATASET_ROOT,
+                    category=category,
+                    subset_name=subset_name,
+                    n_known_frames_for_test=9 if task==CO3DTask.MANY_VIEW else 0,
+                )
+        
+    # Locally evaluate the submission in case we dont evaluate on the hidden test set.
+    if sequence_set != CO3DSequenceSet.TEST and not skip_evaluation:
+        submission.evaluate(num_workers=num_eval_workers)
+    
+    if submit_to_eval_ai:
+        # Export the submission predictions for submition to the evaluation server.
+        # This also validates completeness of the produced predictions.    
+        submission.export_results(validate_results=True)
+        # submit the results to the EvalAI server.
+        submission.submit_to_eval_ai()
 
 
-def load_model_from_implicitron_exp_dir(exp_dir: str) -> GenericModel:
-    cfg = load_implicitron_config_from_exp_dir(exp_dir)
-    experiment = Experiment(**cfg)
-    experiment.model_factory.force_resume = True
-    model = experiment.model_factory(accelerator=None, exp_dir=exp_dir)
-    model.cuda()
-    model.eval()
-    return model
-
-
-def evaluate_implicitron_model(
+def evaluate_implicitron_exp_dir(
     implicitron_exp_dir: str,
     task: Optional[CO3DTask] = None,
     sequence_set: Optional[CO3DSequenceSet] = None,
+    subset_name: Optional[str] = None,
+    category: Optional[str] = None,
     result_dump_file: Optional[str] = None,
-    clear_cache_after_finish: bool = False,
+    clear_submission_cache_before_evaluation: bool = False,
+    clear_submission_cache_after_evaluation: bool = False,
+    submission_output_folder: Optional[str] = None,
+    num_eval_workers: int = 4,
 ):
+    """
+    Run evaluation for an experiment directory of Implicitron.
+    Unless overriden by the user, this function automatically parses the
+    category / subset / task / sequence_set / dataset_root
+    from the implicitron experiment config stored in implicitron_exp_dir.
+
+    Args:
+        implicitron_exp_dir: The directory of an Implicitron experiment.
+        task: The co3d task - either CO3DTask.MANY_VIEW or CO3DTask.FEW_VIEW.
+        sequence_set: The sequence set to evaluate on:
+            CO3DSequenceSet.DEV for for the development set
+            CO3DSequenceSet.TEST for for the test set
+        subset_name: The name of the CO3Dv2 subset.
+            E.g. "manyview_dev_0", "fewview_dev", ...
+        category: The name of the CO3Dv2 category to evaluate.
+        result_dump_file: Path to the json file with evaluation results.
+        clear_submission_cache_before_evaluation: Delete all previous intermediate
+            submission files before commencing the current evaluation run.
+        clear_submission_cache_after_evaluation: Delete all intermediate
+            submission files after the evaluation run.
+        submission_output_folder: The path to the folder with intermediate
+            submission files.
+        num_eval_workers: Number of processes that conduct evaluation.
+    """
     
     if result_dump_file is None:
         result_dump_file = os.path.join(
@@ -108,117 +228,27 @@ def evaluate_implicitron_model(
         =="JsonIndexDatasetMapProviderV2"
     )
 
+    # read the category / subset / task / sequence_set / dataset_root from
+    # the implicitron config
     dataset_provider_args = (
         cfg
         .data_source_ImplicitronDataSource_args
         .dataset_map_provider_JsonIndexDatasetMapProviderV2_args
     )
-    subset_name = dataset_provider_args.subset_name
-    category = dataset_provider_args.category
-    task = get_co3d_task_from_subset_name(subset_name)
-    sequence_set = get_co3d_sequence_set_from_subset_name(subset_name)
+    if subset_name is None:
+        subset_name = dataset_provider_args.subset_name
+    if category is None:
+        category = dataset_provider_args.category
+    if task is None:
+        task = get_co3d_task_from_subset_name(subset_name)
+    if sequence_set is None:
+        sequence_set = get_co3d_sequence_set_from_subset_name(subset_name)
+    
     dataset_root = (
         DATASET_ROOT
         if DATASET_ROOT is not None
         else dataset_provider_args.dataset_root
     )
-
-    # parse the dataset root from cfg
-    submission, results = eval_implicitron_category(
-        implicitron_exp_dir=implicitron_exp_dir,
-        category=category,
-        subset_name=subset_name,
-        dataset_root=dataset_root,
-        task=task,
-        sequence_set=sequence_set,
-        clear_submission_files=True,
-        fill_results_from_cache=False,
-        skip_evaluation=False,
-        submit_to_eval_ai=False,
-    )
-
-    category_subset_results = results[(category, subset_name)][0]
-
-    # add the eval epoch as well
-    category_subset_results["eval_epoch"] = parse_epoch_from_model_path(
-        find_last_checkpoint(implicitron_exp_dir)
-    )
-
-    logger.info("Implicitron model results:")
-    logger.info(f"    category={category} / subset_name={subset_name}")
-    for k, v in category_subset_results.items():
-        print(f"    {k:20s}: {v:1.3f}")
-
-    if clear_cache_after_finish:
-        submission.clear_files()
-    
-    logger.info(f"Dumping challenge eval results to {result_dump_file}.")
-    with open(result_dump_file, "w") as f:
-        json.dump(category_subset_results, f)
-
-    return category_subset_results
-
-
-def get_dataset_map(
-    dataset_root: str,
-    category: str,
-    subset_name: str,
-    n_known_frames_for_test: int = 0,
-) -> DatasetMap:
-    """
-    Obtain the dataset map that contains the train/val/test dataset objects.
-    """
-    expand_args_fields(JsonIndexDatasetMapProviderV2)
-    dataset_map_provider = JsonIndexDatasetMapProviderV2(
-        category=category,
-        subset_name=subset_name,
-        dataset_root=dataset_root,
-        test_on_train=False,
-        only_test_set=False,
-        load_eval_batches=True,
-        dataset_JsonIndexDataset_args=DictConfig({"remove_empty_masks": False}),
-        n_known_frames_for_test=n_known_frames_for_test,
-    )
-    return dataset_map_provider.get_dataset_map()
-
-
-def eval_implicitron_category(
-    implicitron_exp_dir: str,
-    category: str,
-    subset_name: str,
-    dataset_root: str = DATASET_ROOT,
-    task = CO3DTask.MANY_VIEW,
-    sequence_set = CO3DSequenceSet.DEV,
-    clear_submission_files: bool = False,
-    num_eval_workers: int = 4,
-    fill_results_from_cache: bool = False,
-    skip_evaluation: bool = False,
-    submit_to_eval_ai: bool = False,
-    submission_output_folder: Optional[str] = None,
-):
-    """
-    Make an Implicitron model submission for the CO3DChallenge.
-
-    Args:
-        dataset_root: Path to the root dataset folder.
-        task: The co3d task - either CO3DTask.MANY_VIEW or CO3DTask.FEW_VIEW.
-        sequence_set: The sequence set to evaluate on:
-            CO3DSequenceSet.DEV for for the development set
-            CO3DSequenceSet.TEST for for the test set
-        clear_submission_files: Delete all previous intermediate submission files before
-            commencing the current submission run.
-        num_eval_workers: Number of processes that conduct evaluation.
-        cheat_with_gt_data: If `True`, bypasses the DBIR stage and only simply
-            uses ground truth test data. This, of course, only works for the
-            development set which is not redacted.
-        fill_results_from_cache: If `True`, skips running the DBIR model and rather 
-            loads the results exported from a previous run.
-        skip_evaluation: If `True`, will not locally evaluate the predictions.
-        submit_to_eval_ai: If `True`, will automatically submit the exported result
-            archive to EvalAI using the CLI interface (needs to be installed with 
-            `pip install evalai`). This requires setting the EVAL_AI_PERSONAL_TOKEN 
-            environment variable to your personal EVAL_AI token.
-    """
 
     logger.info(
         f"Evaluating Implicitron model on category {category}; subset {subset_name}"
@@ -226,11 +256,12 @@ def eval_implicitron_category(
 
     # the folder storing all predictions and results of the submission
     if submission_output_folder is None:
-        submission_output_folder = os.path.join(
+        submission_output_folder = get_default_implicitron_exp_dir_submission_output_folder(
             implicitron_exp_dir,
-            f"implicitron_submission_output_{task.value}_{sequence_set.value}",
+            task,
+            sequence_set,
         )
-
+        
     # create the submission object
     submission = CO3DSubmission(
         task=task,
@@ -238,50 +269,53 @@ def eval_implicitron_category(
         output_folder=submission_output_folder,
         dataset_root=DATASET_ROOT,
     )
-    
+
     if task==CO3DTask.FEW_VIEW and submission.has_only_single_sequence_subset():
         # if only a single-sequence dataset is downloaded, only the many-view task
         # is available
-        logger.warning(
+        raise ValueError(
             f"Cannot evaluate the few-view task in {sequence_set.value} when only the"
             " singlesequence subset of CO3D is present."
         )
-        return
+        
+    if clear_submission_cache_before_evaluation:
+        submission.clear_files()    
 
-    if fill_results_from_cache:
-        # only take existing results
-        submission.fill_results_from_cache()
-    
-    else:
-        # Clear all files generated by potential previous submissions.
-        # Hint: disable this in case you want to resume an evaluation.
-        if clear_submission_files:
-            submission.clear_files()
-
-        # Generate new views for all evaluation examples in category/subset_name.
-        update_implicitron_submission_with_category_and_subset_predictions(
-            submission=submission,
-            implicitron_exp_dir=implicitron_exp_dir,
-            dataset_root=dataset_root,
-            category=category,
-            subset_name=subset_name,
-            n_known_frames_for_test=9 if task==CO3DTask.MANY_VIEW else 0,
-        )
+    # Generate new views for all evaluation examples in category/subset_name.
+    update_implicitron_submission_with_category_and_subset_predictions(
+        submission=submission,
+        implicitron_exp_dir=implicitron_exp_dir,
+        dataset_root=dataset_root,
+        category=category,
+        subset_name=subset_name,
+        n_known_frames_for_test=9 if task==CO3DTask.MANY_VIEW else 0,
+    )
 
     # Locally evaluate the submission in case we dont evaluate on the hidden test set.
-    if (not skip_evaluation and sequence_set != CO3DSequenceSet.TEST):
-        results = submission.evaluate(num_workers=num_eval_workers)
+    if sequence_set == CO3DSequenceSet.TEST:
+        logger.warning("Cannot evaluate on the hidden test set. Skipping evaluation.")
+        category_subset_results = {m: 0.0 for m in EVAL_METRIC_NAMES}
     else:
-        results = None
+        results = submission.evaluate(num_workers=num_eval_workers)
+        category_subset_results = results[(category, subset_name)][0]
 
-    if submit_to_eval_ai:
-        # Export the submission predictions for submition to the evaluation server.
-        # This also validates completeness of the produced predictions.    
-        submission.export_results(validate_results=True)
-        # submit the results to the EvalAI server.
-        submission.submit_to_eval_ai()
+    # add the eval epoch as well
+    category_subset_results["eval_epoch"] = parse_epoch_from_model_path(
+        find_last_checkpoint(implicitron_exp_dir)
+    )
 
-    return submission, results
+    logger.info("Implicitron model results:")
+    logger.info(f"category={category} / subset_name={subset_name}")
+    print_category_subset_results(category_subset_results)
+
+    if clear_submission_cache_after_evaluation:
+        submission.clear_files()
+        
+    logger.info(f"Dumping challenge eval results to {result_dump_file}.")
+    with open(result_dump_file, "w") as f:
+        json.dump(category_subset_results, f)
+
+    return category_subset_results
 
 
 @torch.no_grad()
@@ -300,16 +334,12 @@ def update_implicitron_submission_with_category_and_subset_predictions(
 
     Args:
         submission: CO3DSubmission object.
+        implicitron_exp_dir: Implicitron experiment directory to load the model from.
         dataset_root: Path to the root dataset folder containing CO3Dv2.
         category: A CO3Dv2 category to evaluate.
         subset_name: The name of the evaluation subset of the category.
         num_workers: Number of processes to use for evaluation.
-        cheat_with_gt_data: If `True`, bypasses the DBIR stage and only simply
-            uses ground truth test data. This, of course, only works for the
-            development set which is not redacted.
-        load_dataset_pointcloud: If `True`, uses the ground truth dataset
-            pointclouds instead of unprojecting known views.
-        point_radius: The radius of the rendered points.
+        n_known_frames_for_test: The number of known frames to append to the test batches.
     """
 
     logger.info(
@@ -408,3 +438,90 @@ def update_implicitron_submission_with_category_and_subset_predictions(
 
     # reset all warnings
     warnings.simplefilter("always")
+
+
+def get_default_implicitron_exp_dir_submission_output_folder(
+    implicitron_exp_dir: str,
+    task: CO3DTask,
+    sequence_set: CO3DSequenceSet,
+):
+    return os.path.join(
+        implicitron_exp_dir,
+        f"implicitron_submission_output_{task.value}_{sequence_set.value}",
+    )
+
+
+def parse_co3d_challenge_settings_from_implicitron_exp_dir(
+    implicitron_exp_dir: str
+) -> Tuple[CO3DSequenceSet, CO3DTask, str, str]:
+    """
+    Reads the config of an implicitron experiment stored in `implicitron_exp_dir` and
+    returns the configuration of the corresponding challenge entry.
+
+    Args:
+        implicitron_exp_dir: The directory of an Implicitron experiment.
+    Returns:
+        sequence_set: CO3D sequence set of the experiment.
+        task: The CO3D task of the experiment.
+        category: The category of the experiment.
+        subset_name: The name of the CO3D subset.
+    """
+
+    cfg = load_implicitron_config_from_exp_dir(implicitron_exp_dir)
+    dataset_provider_args = (
+        cfg
+        .data_source_ImplicitronDataSource_args
+        .dataset_map_provider_JsonIndexDatasetMapProviderV2_args
+    )
+    subset_name = dataset_provider_args.subset_name
+    category = dataset_provider_args.category
+    task = get_co3d_task_from_subset_name(subset_name)
+    sequence_set = get_co3d_sequence_set_from_subset_name(subset_name)
+    return sequence_set, task, category, subset_name
+
+
+def load_implicitron_config_from_exp_dir(implicitron_exp_dir: str):
+    cfg_filename = os.path.join(implicitron_exp_dir, "expconfig.yaml")
+    cfg_load = OmegaConf.load(cfg_filename)
+    cfg_default = get_default_args(Experiment)
+    cfg = OmegaConf.merge(cfg_default, cfg_load)
+    cfg.exp_dir = implicitron_exp_dir
+    return cfg
+
+
+def load_model_from_implicitron_exp_dir(exp_dir: str) -> GenericModel:
+    cfg = load_implicitron_config_from_exp_dir(exp_dir)
+    experiment = Experiment(**cfg)
+    experiment.model_factory.force_resume = True
+    model = experiment.model_factory(accelerator=None, exp_dir=exp_dir)
+    model.cuda()
+    model.eval()
+    return model
+
+
+def get_dataset_map(
+    dataset_root: str,
+    category: str,
+    subset_name: str,
+    n_known_frames_for_test: int = 0,
+) -> DatasetMap:
+    """
+    Obtain the dataset map that contains the train/val/test dataset objects.
+    """
+    expand_args_fields(JsonIndexDatasetMapProviderV2)
+    dataset_map_provider = JsonIndexDatasetMapProviderV2(
+        category=category,
+        subset_name=subset_name,
+        dataset_root=dataset_root,
+        test_on_train=False,
+        only_test_set=False,
+        load_eval_batches=True,
+        dataset_JsonIndexDataset_args=DictConfig({"remove_empty_masks": False}),
+        n_known_frames_for_test=n_known_frames_for_test,
+    )
+    return dataset_map_provider.get_dataset_map()
+
+
+def print_category_subset_results(category_subset_results: Dict[str, float]):
+    for k, v in category_subset_results.items():
+        print(f"{k:20s}: {v:1.3f}")
