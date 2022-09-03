@@ -1,12 +1,12 @@
-"""
-Implements evaluation of Implicitron models implemented using GenericModel on CO3D.
-"""
-
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+
+"""
+Evaluation of Implicitron models on CO3Dv2 challenge.
+"""
 
 
 import logging
@@ -219,8 +219,6 @@ def evaluate_implicitron_exp_dir(
         )
 
     cfg = load_implicitron_config_from_exp_dir(implicitron_exp_dir)  
-
-    # logger.setLevel(logging.INFO, format='%(message)s')
 
     # assert few config settings    
     assert (

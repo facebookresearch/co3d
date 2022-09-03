@@ -38,12 +38,16 @@ def link_rgbda_frame_files(fl_existing: str, fl_src_link: str):
         link_src = fl_src_link+pfix
         if os.path.islink(link_src):
             os.remove(link_src)
+        elif os.path.isfile(link_src):
+            raise ValueError(f"Link source {link_src} is an actual file (not a link).")
         if not os.path.isfile(link_tgt):
             if pfix=="_depth_mask.png":
                 pass
             else:
                 raise ValueError(f"Target file {link_tgt} does not exist!")
         else:
+            if os.path.islink(link_src):
+                os.remove(link_src)
             os.symlink(link_tgt, link_src)
         
 
