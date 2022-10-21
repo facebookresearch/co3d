@@ -261,6 +261,7 @@ def load_all_eval_batches(
     task: Optional[CO3DTask] = None,
     sequence_set: Optional[CO3DSequenceSet] = None,
     remove_frame_paths: bool = False,
+    only_target_frame: bool = True,
 ):
     """
     Load eval batches files stored in dataset_root into a dictionary:
@@ -275,6 +276,7 @@ def load_all_eval_batches(
         sequence_set: CO3D challenge sequence set.
         remove_frame_paths: If `True`, removes the paths to frames from the loaded
             dataset index.
+        only_target_frame: Loads only the first (evaluation) frame from each eval batch.
 
     Returns:
         eval_batches_dict: Output dictionary.
@@ -295,6 +297,7 @@ def load_all_eval_batches(
                 category,
                 subset_name,
                 remove_frame_paths=remove_frame_paths,
+                only_target_frame=only_target_frame,
             )
     return eval_batches_dict
 
@@ -304,6 +307,7 @@ def _load_eval_batches_file(
     category: str,
     subset_name: str,
     remove_frame_paths: bool = True,
+    only_target_frame: bool = True,
 ):
     eval_batches_fl = os.path.join(
         dataset_root,
@@ -313,9 +317,12 @@ def _load_eval_batches_file(
     )
     with open(eval_batches_fl, "r") as f:
         eval_batches = json.load(f)
-    eval_batches = [
-        b[0] for b in eval_batches
-    ]  # take only the first (target evaluation) frame
+    
+    if only_target_frame:
+        eval_batches = [
+            b[0] for b in eval_batches
+        ]  # take only the first (target evaluation) frame
+    
     if remove_frame_paths:
         eval_batches = [b[:2] for b in eval_batches]
     return eval_batches

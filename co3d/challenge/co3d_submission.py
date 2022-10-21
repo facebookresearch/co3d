@@ -378,7 +378,7 @@ class CO3DSubmission:
     def _get_result_frame_index(self):
         return {(res.sequence_name, res.frame_number): res for res in self._result_list}
 
-    def get_eval_batches_map(self):
+    def get_eval_batches_map(self, only_target_frame: bool = False):
         """
         Returns a dictionary of evaluation examples of the following form:
             ```
@@ -410,6 +410,10 @@ class CO3DSubmission:
         data is stored in the respective `frame_annotations.jgz` and `sequence_annotation.jgz`
         files in `<dataset_root>/<category>`.
 
+        Args:
+            only_target_frame: Returns only the first (target evaluation) frame
+                for each eval batch.
+
         Returns:
             eval_batches_map: A dictionary of evaluation examples for each category.
         """
@@ -419,8 +423,20 @@ class CO3DSubmission:
                 self.task,
                 self.sequence_set,
                 remove_frame_paths=False,
-            )    
-        return self._eval_batches_map
+                only_target_frame=False,
+            )
+
+        if only_target_frame:
+            # take only the first (target evaluation) frame for each eval batch
+            eval_batches_map = {}
+            for (category, subset_name), eval_batches in self._eval_batches_map.items():
+                eval_batches_map[(category, subset_name)] = [
+                    b[0] for b in eval_batches
+                ]
+        else:
+            eval_batches_map = self._eval_batches_map
+
+        return eval_batches_map
 
     def clear_files(self):
         """
@@ -443,7 +459,7 @@ class CO3DSubmission:
                 "For validating the results, dataset_root has to be defined"
                 + " and has to point to a valid root folder of the CO3D dataset."
             )
-        eval_batches_map = self.get_eval_batches_map()
+        eval_batches_map = self.get_eval_batches_map(only_target_frame=True)
         result_frame_index = self._get_result_frame_index()
         valid = True
         for (category, subset_name), eval_batches in eval_batches_map.items():
@@ -775,7 +791,7 @@ class CO3DSubmission:
                 )
             self._eval_start_time = time.time()
             
-        eval_batches_map = self.get_eval_batches_map()
+        eval_batches_map = self.get_eval_batches_map(only_target_frame=True)
 
         # buffers for results and exceptions
         eval_exceptions = {}

@@ -144,7 +144,6 @@ def update_dbir_submission_with_category_and_subset_predictions(
         # sanity check that the eval frame data has correctly redacted entries
         _check_valid_eval_frame_data(eval_frame_data, task, sequence_set)
 
-        
         if cheat_with_gt_data:
             # Cheat by taking the ground truth data. This should give in perfect metrics.
             mask_render = (eval_frame_data.fg_probability[:1] > 0.5).float()
@@ -325,7 +324,7 @@ if __name__ == "__main__":
 
     # iterate over all tasks and sequence sets
     for sequence_set in [CO3DSequenceSet.DEV,]:
-        for task in [CO3DTask.MANY_VIEW, CO3DTask.FEW_VIEW]:
+        for task in [CO3DTask.FEW_VIEW, CO3DTask.MANY_VIEW]:
             make_dbir_submission(
                 task=task,
                 sequence_set=sequence_set,
