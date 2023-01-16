@@ -50,7 +50,7 @@ We also provide a subset of the dataset consisting only of the sequences selecte
 `--single_sequence_subset` option to `download_dataset.py`:
     
 ```
-python ./co3d/dataset/download_dataset.py --download_folder DOWNLOAD_FOLDER --single_sequence_subset
+python ./co3d/download_dataset.py --download_folder DOWNLOAD_FOLDER --single_sequence_subset
 ```
 
 <b>Size:</b> The single-sequence subset is much smaller than the full dataset and takes <b>8.9 GB of disk-space</b>.
