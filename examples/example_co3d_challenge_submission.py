@@ -283,7 +283,7 @@ def make_dbir_submission(
                 f"Evaluating category {category}; subset {subset_name}"
                 + f" ({eval_i+1} / {len(eval_batches_map)})"
             )
-            
+
             # Generate new views for all evaluation examples in category/subset_name.
             update_dbir_submission_with_category_and_subset_predictions(
                 submission=submission,
@@ -323,8 +323,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # iterate over all tasks and sequence sets
-    for sequence_set in [CO3DSequenceSet.DEV,]:
-        for task in [CO3DTask.FEW_VIEW, CO3DTask.MANY_VIEW]:
+    for sequence_set in [CO3DSequenceSet.DEV, CO3DSequenceSet.TEST]:
+        for task in [CO3DTask.MANY_VIEW, CO3DTask.FEW_VIEW]:
             make_dbir_submission(
                 task=task,
                 sequence_set=sequence_set,
