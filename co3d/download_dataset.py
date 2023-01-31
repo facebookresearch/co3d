@@ -57,7 +57,7 @@ def main(
             "Please specify `link_list_file` with a valid path to a file"
             " with CO3D download links."
             " The file is stored in the co3d github:"
-            " https://https://github.com/facebookresearch/co3d/blob/main/co3d/links.txt"
+            " https://github.com/facebookresearch/co3d/blob/main/co3d/links.json"
         )
 
     if not os.path.isdir(download_folder):
