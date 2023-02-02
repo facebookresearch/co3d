@@ -38,6 +38,7 @@ def _count_category(category):
     for _, frame_anno_list in seq_to_frame_annos.items():
         seq_set, _ = frame_anno_list[0].meta["frame_type"].split("_")
         seq_set_cnt.update([seq_set])
+        seq_set_cnt.update(["all"])
 
     return dict(seq_set_cnt)
 
@@ -49,8 +50,6 @@ def main():
 
     categories = sorted(list(category_to_subset_name_list.keys()))
     cat_to_n_per_set = {}
-    # for category in tqdm(categories):
-    #     cat_to_n_per_set[category] = dict(seq_set_cnt)
 
     counts_per_category = Parallel(n_jobs=20)(
         delayed(_count_category)(c) for c in categories
@@ -59,10 +58,14 @@ def main():
     cat_to_n_per_set = dict(zip(categories, counts_per_category))
 
     seq_sets_ = list(cat_to_n_per_set[categories[0]].keys())
-    tab = [
-        [category, *[cat_to_n_per_set[category].get(set_, 0) for set_ in seq_sets_]]
-        for category in cat_to_n_per_set
-    ]
+    tab = []
+    for category in cat_to_n_per_set:
+        n_per_set = [cat_to_n_per_set[category].get(set_, 0) for set_ in seq_sets_]
+        tab.append([category, *n_per_set])
+
+    totals = [sum(t[i] for t in tab) for i in [1, 2, 3, 4]]
+    tab.append(["TOTAL", *totals])
+
     print(tabulate(tab, headers=["category", *seq_sets_]))
 
 
