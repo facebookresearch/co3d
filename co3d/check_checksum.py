@@ -16,7 +16,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 
-SHA256S_FILE = os.path.join(os.path.dirname(__file__), "co3d_sha256.json")
+DEFAULT_SHA256S_FILE = os.path.join(os.path.dirname(__file__), "co3d_sha256.json")
 BLOCKSIZE = 65536
 
 
@@ -25,7 +25,21 @@ def main(
     dump: bool = False,
     n_sha256_workers: int = 4,
     single_sequence_subset: bool = False,
+    sha256s_file: Optional[str] = None,
 ):
+
+    # dict {zipname: sha256}
+    if sha256s_file is None:
+        sha256s_file = DEFAULT_SHA256S_FILE
+    
+    if not os.path.isfile(sha256s_file):
+        raise ValueError(f"The SHA256 file does not exist ({sha256s_file}).")
+
+    expected_sha256s = get_expected_sha256s(
+        single_sequence_subset=single_sequence_subset,
+        sha256s_file=sha256s_file,
+    )
+
     zipfiles = sorted(glob.glob(os.path.join(download_folder, "*.zip")))
     print(f"Extracting SHA256 hashes for {len(zipfiles)} files in {download_folder}.")
     extracted_sha256s_list = []
@@ -37,20 +51,16 @@ def main(
             extracted_sha256s_list.append(extracted_hash)
             pass
 
-    # dict {zipname: sha256}
     extracted_sha256s = dict(
         zip([os.path.split(z)[-1] for z in zipfiles], extracted_sha256s_list)
     )
 
     if dump:
         print(extracted_sha256s)
-        with open(SHA256S_FILE, "w") as f:
+        with open(sha256s_file, "w") as f:
             json.dump(extracted_sha256s, f, indent=2)
 
-    expected_sha256s = get_expected_sha256s(
-        single_sequence_subset=single_sequence_subset
-    )
-
+    
     missing_keys, invalid_keys = [], []
     for k in expected_sha256s.keys():
         if k not in extracted_sha256s:
@@ -70,8 +80,11 @@ def main(
         )
 
 
-def get_expected_sha256s(single_sequence_subset: bool = False):
-    with open(SHA256S_FILE, "r") as f:
+def get_expected_sha256s(
+    single_sequence_subset: bool = False,
+    sha256s_file: str = DEFAULT_SHA256S_FILE,
+):
+    with open(sha256s_file, "r") as f:
         expected_sha256s = json.load(f)
     if single_sequence_subset:
         return expected_sha256s["singlesequence"]
@@ -83,14 +96,22 @@ def check_co3d_sha256(
     path: str,
     expected_sha256s: Optional[dict] = None,
     single_sequence_subset: bool = False,
+    sha256s_file: str = DEFAULT_SHA256S_FILE,
+    do_assertion: bool = True,
 ):
     zipname = os.path.split(path)[-1]
     if expected_sha256s is None:
-        expected_sha256s = get_expected_sha256s(single_sequence_subset)
+        expected_sha256s = get_expected_sha256s(
+            single_sequence_subset=single_sequence_subset,
+            sha256s_file=sha256s_file,
+        )
     extracted_hash = sha256_file(path)
-    assert (
-        extracted_hash == expected_sha256s[zipname]
-    ), f"{extracted_hash} != {expected_sha256s[zipname]}"
+    if do_assertion:
+        assert (
+            extracted_hash == expected_sha256s[zipname]
+        ), f"{zipname}: ({extracted_hash} != {expected_sha256s[zipname]})"
+    else:
+        return extracted_hash == expected_sha256s[zipname]
 
 
 def sha256_file(path: str):
@@ -122,6 +143,12 @@ if __name__ == "__main__":
         help="A local target folder for downloading the the dataset files.",
     )
     parser.add_argument(
+        "--sha256s_file",
+        type=str,
+        help="A local target folder for downloading the the dataset files.",
+        default=None,
+    )
+    parser.add_argument(
         "--num_workers",
         type=int,
         default=4,
@@ -145,4 +172,5 @@ if __name__ == "__main__":
         dump=bool(args.dump_sha256s),
         n_sha256_workers=int(args.num_workers),
         single_sequence_subset=bool(args.single_sequence_subset),
+        sha256s_file=str(args.sha256s_file),
     )

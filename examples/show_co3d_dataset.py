@@ -25,6 +25,10 @@ from pytorch3d.implicitron.dataset.json_index_dataset_map_provider_v2 import (
 )
 from pytorch3d.implicitron.tools.config import expand_args_fields
 from pytorch3d.implicitron.models.visualization.render_flyaround import render_flyaround
+from pytorch3d.implicitron.tools.vis_utils import (
+    get_visdom_connection,
+    make_depth_image,
+)
 
 
 DATASET_ROOT = os.getenv("CO3DV2_DATASET_ROOT")
@@ -36,6 +40,8 @@ logger = logging.getLogger(__file__)
 def main(
     output_dir: str = os.path.join(os.path.dirname(__file__), "show_co3d_dataset_files"),
     n_show_sequences_per_category: int = 2,
+    visdom_env: str = "show_co3d_dataset",
+    visualize_point_clouds: bool = False,
 ):
     """
     Visualizes object point clouds from the CO3D dataset.
@@ -52,9 +58,17 @@ def main(
     os.makedirs(output_dir, exist_ok=True)
 
     # get the category list
+    if DATASET_ROOT is None:
+        raise ValueError(
+            "Please set the CO3DV2_DATASET_ROOT environment variable to a valid"
+            " CO3Dv2 dataset root folder."
+        )
     with open(os.path.join(DATASET_ROOT, "category_to_subset_name_list.json"), "r") as f:
         category_to_subset_name_list = json.load(f)
     
+    # get the visdom connection
+    viz = get_visdom_connection()
+
     # iterate over the co3d categories
     categories = sorted(list(category_to_subset_name_list.keys()))
     for category in tqdm(categories):
@@ -63,7 +77,7 @@ def main(
 
         for subset_name in [
             "fewview_dev",
-            "manview_dev_0",
+            "manyview_dev_0",
         ]:
 
             if subset_name not in subset_name_list:
@@ -94,6 +108,32 @@ def main(
             )
             
             for sequence_name in show_sequence_names:
+
+                # load up a bunch of frames
+                show_dataset_idx = [
+                    x[2] for x in list(train_dataset.sequence_frames_in_order(sequence_name))
+                ]
+                random.shuffle(show_dataset_idx)
+                show_dataset_idx = show_dataset_idx[:10]
+                data_to_show = [train_dataset[i] for i in show_dataset_idx]
+                
+                # show individual frames
+                all_ims = []
+                for k in ["image_rgb", "depth_map", "depth_mask", "fg_probability"]:
+                    all_ims_now = torch.stack([d[k] for d in data_to_show])
+                    if k=="depth_map":
+                        all_ims_now = make_depth_image(
+                            all_ims_now, torch.ones_like(all_ims_now)
+                        )
+                    if k in ["depth_mask", "fg_probability", "depth_map"]:
+                        all_ims_now = all_ims_now.repeat(1, 3, 1, 1)
+                    all_ims.append(all_ims_now.clamp(0.0, 1.0))
+                all_ims = torch.cat(all_ims, dim=2)
+                title = f"random_frames"
+                viz.images(all_ims, env=visdom_env, win=title, opts={"title": title})
+                
+                if not visualize_point_clouds:
+                    continue
 
                 for load_dataset_pointcloud in [True, False]:
 
@@ -129,7 +169,7 @@ def main(
                         traj_offset=1.0,
                         n_source_views=1,
                         visdom_show_preds=True,
-                        visdom_environment="show_co3d_dataset",
+                        visdom_environment=visdom_env,
                         visualize_preds_keys=(
                             "images_render",
                             "masks_render",
