@@ -75,13 +75,7 @@ def main(
 
         subset_name_list = category_to_subset_name_list[category]
 
-        for subset_name in [
-            "fewview_dev",
-            "manyview_dev_0",
-        ]:
-
-            if subset_name not in subset_name_list:
-                continue
+        for subset_name in subset_name_list:
 
             # obtain the dataset
             expand_args_fields(JsonIndexDatasetMapProviderV2)
