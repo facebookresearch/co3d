@@ -18,16 +18,22 @@ from omegaconf import DictConfig
 from typing import Tuple
 
 from co3d.utils import dbir_utils 
-from pytorch3d.renderer.cameras import CamerasBase
+from pytorch3d.renderer.cameras import CamerasBase, PerspectiveCameras
+from pytorch3d.renderer.camera_utils import join_cameras_as_batch
 from pytorch3d.implicitron.dataset.json_index_dataset import JsonIndexDataset
 from pytorch3d.implicitron.dataset.json_index_dataset_map_provider_v2 import (
     JsonIndexDatasetMapProviderV2
 )
 from pytorch3d.implicitron.tools.config import expand_args_fields
 from pytorch3d.implicitron.models.visualization.render_flyaround import render_flyaround
+from pytorch3d.implicitron.dataset.dataset_base import FrameData
+from pytorch3d.vis.plotly_vis import plot_scene
 from pytorch3d.implicitron.tools.vis_utils import (
     get_visdom_connection,
     make_depth_image,
+)
+from pytorch3d.implicitron.tools.point_cloud_utils import (
+    get_rgbd_point_cloud,
 )
 
 
@@ -42,6 +48,8 @@ def main(
     n_show_sequences_per_category: int = 2,
     visdom_env: str = "show_co3d_dataset",
     visualize_point_clouds: bool = False,
+    visualize_3d_scene: bool = True,
+    n_frames_show: int = 20,
 ):
     """
     Visualizes object point clouds from the CO3D dataset.
@@ -50,6 +58,9 @@ def main(
     2 videos per a category subset. Hence, the whole loop will run for
     a long time (3-4 hours).
     """
+
+    # make the script reproducible
+    random.seed(30)
 
     # log info messages
     logging.basicConfig(level=logging.INFO)
@@ -108,13 +119,15 @@ def main(
                     x[2] for x in list(train_dataset.sequence_frames_in_order(sequence_name))
                 ]
                 random.shuffle(show_dataset_idx)
-                show_dataset_idx = show_dataset_idx[:10]
+                show_dataset_idx = show_dataset_idx[:n_frames_show]
                 data_to_show = [train_dataset[i] for i in show_dataset_idx]
+                data_to_show_collated = data_to_show[0].collate(data_to_show)
                 
                 # show individual frames
                 all_ims = []
                 for k in ["image_rgb", "depth_map", "depth_mask", "fg_probability"]:
-                    all_ims_now = torch.stack([d[k] for d in data_to_show])
+                    # all_ims_now = torch.stack([d[k] for d in data_to_show])
+                    all_ims_now = getattr(data_to_show_collated, k)
                     if k=="depth_map":
                         all_ims_now = make_depth_image(
                             all_ims_now, torch.ones_like(all_ims_now)
@@ -124,8 +137,34 @@ def main(
                     all_ims.append(all_ims_now.clamp(0.0, 1.0))
                 all_ims = torch.cat(all_ims, dim=2)
                 title = f"random_frames"
-                viz.images(all_ims, env=visdom_env, win=title, opts={"title": title})
+                viz.images(
+                    all_ims, nrow=all_ims.shape[-1], env=visdom_env,
+                    win=title, opts={"title": title},
+                )
                 
+                if visualize_3d_scene:
+                    # visualize a 3d plotly plot of the scene
+                    camera_show = data_to_show_collated.camera
+                    pointcloud_show = get_rgbd_point_cloud(
+                        data_to_show_collated.camera,
+                        data_to_show_collated.image_rgb,
+                        data_to_show_collated.depth_map,
+                        (data_to_show_collated.fg_probability > 0.5).float(),
+                        mask_points=True,
+                    )
+                    viz.plotlyplot(
+                        plot_scene(
+                            {
+                                sequence_name: {
+                                    "camera":camera_show,
+                                    "point_cloud": pointcloud_show
+                                }
+                            }
+                        ),
+                        env=visdom_env,
+                        win="3d_scene",
+                    )
+
                 if not visualize_point_clouds:
                     continue
 
