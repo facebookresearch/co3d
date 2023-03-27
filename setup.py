@@ -16,11 +16,11 @@ setuptools.setup(
     license="LICENSE",
     description="Common Objects in 3D codebase",
     long_description=open("README.md").read(),
-    #    install_requires=[
-    #        "numpy",
-    #        "Pillow",
-    #        "tqdm",
-    #        "visdom",
-    #        "plyfile",
-    #    ],
+    install_requires=[
+        "numpy",
+        "Pillow",
+        "requests",
+        "tqdm",
+        "plyfile",
+    ],
 )

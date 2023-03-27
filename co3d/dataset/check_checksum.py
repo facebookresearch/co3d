@@ -16,28 +16,23 @@ from multiprocessing import Pool
 from tqdm import tqdm
 
 
-DEFAULT_SHA256S_FILE = os.path.join(os.path.dirname(__file__), "co3d_sha256.json")
+DEFAULT_SHA256S_FILE = os.path.join(__file__.rsplit(os.sep, 2)[0], "co3d_sha256.json")
 BLOCKSIZE = 65536
 
 
 def main(
     download_folder: str,
+    sha256s_file: str,
     dump: bool = False,
     n_sha256_workers: int = 4,
     single_sequence_subset: bool = False,
-    sha256s_file: Optional[str] = None,
 ):
-
-    # dict {zipname: sha256}
-    if sha256s_file is None:
-        sha256s_file = DEFAULT_SHA256S_FILE
-    
     if not os.path.isfile(sha256s_file):
         raise ValueError(f"The SHA256 file does not exist ({sha256s_file}).")
 
     expected_sha256s = get_expected_sha256s(
-        single_sequence_subset=single_sequence_subset,
         sha256s_file=sha256s_file,
+        single_sequence_subset=single_sequence_subset,
     )
 
     zipfiles = sorted(glob.glob(os.path.join(download_folder, "*.zip")))
@@ -81,8 +76,8 @@ def main(
 
 
 def get_expected_sha256s(
+    sha256s_file: str,
     single_sequence_subset: bool = False,
-    sha256s_file: str = DEFAULT_SHA256S_FILE,
 ):
     with open(sha256s_file, "r") as f:
         expected_sha256s = json.load(f)
@@ -94,16 +89,16 @@ def get_expected_sha256s(
 
 def check_co3d_sha256(
     path: str,
+    sha256s_file: str,
     expected_sha256s: Optional[dict] = None,
     single_sequence_subset: bool = False,
-    sha256s_file: str = DEFAULT_SHA256S_FILE,
     do_assertion: bool = True,
 ):
     zipname = os.path.split(path)[-1]
     if expected_sha256s is None:
         expected_sha256s = get_expected_sha256s(
-            single_sequence_subset=single_sequence_subset,
             sha256s_file=sha256s_file,
+            single_sequence_subset=single_sequence_subset,
         )
     extracted_hash = sha256_file(path)
     if do_assertion:
@@ -144,7 +139,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sha256s_file",
-        type=str,
+        type=DEFAULT_SHA256S_FILE,
         help="A local target folder for downloading the the dataset files.",
         default=None,
     )
