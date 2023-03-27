@@ -63,9 +63,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checksum_check",
         action="store_true",
-        default=False,
+        default=True,
         help="Check the SHA256 checksum of each downloaded file before extraction.",
     )
+    parser.add_argument(
+        "--no_checksum_check",
+        action="store_false",
+        dest="checksum_check",
+        default=False,
+        help="Does not check the SHA256 checksum of each downloaded file before extraction.",
+    )
+    parser.set_defaults(checksum_check=True)
     parser.add_argument(
         "--single_sequence_subset",
         action="store_true",

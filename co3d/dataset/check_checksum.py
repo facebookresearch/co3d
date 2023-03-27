@@ -139,9 +139,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sha256s_file",
-        type=DEFAULT_SHA256S_FILE,
+        type=str,
         help="A local target folder for downloading the the dataset files.",
-        default=None,
+        default=DEFAULT_SHA256S_FILE,
     )
     parser.add_argument(
         "--num_workers",

@@ -31,14 +31,14 @@ def download_dataset(
     sha256s_file: Optional[str] = None,
 ):
     """
-    Downloads and unpacks the CO3D dataset.
+    Downloads and unpacks the dataset in CO3D format.
 
     Note: The script will make a folder `<download_folder>/_in_progress`, which
         stores files whose download is in progress. The folder can be safely deleted
         the download is finished.
 
     Args:
-        link_list_file: A text file with the list of CO3D file download links.
+        link_list_file: A text file with the list of zip file download links.
         download_folder: A local target folder for downloading the
             the dataset files.
         n_download_workers: The number of parallel workers
@@ -63,16 +63,16 @@ def download_dataset(
 
     if not os.path.isfile(link_list_file):
         raise ValueError(
-            "Please specify `link_list_file` with a valid path to a file"
-            " with CO3D download links."
-            " The file is stored in the co3d github:"
+            "Please specify `link_list_file` with a valid path to a json"
+            " with zip file download links."
+            " For CO3Dv2, the file is stored in the co3d github:"
             " https://github.com/facebookresearch/co3d/blob/main/co3d/links.json"
         )
 
     if not os.path.isdir(download_folder):
         raise ValueError(
             "Please specify `download_folder` with a valid path to a target folder"
-            + " for downloading the CO3D dataset."
+            + " for downloading the dataset."
             + f" {download_folder} does not exist."
         )
 
@@ -91,7 +91,7 @@ def download_dataset(
             link_name = os.path.split(url)[-1]
             if single_sequence_subset:
                 link_name = link_name.replace("_singlesequence", "")
-            if category_name=="METADATA":
+            if category_name.upper() == "METADATA":
                 metadata_links.append((link_name, url))
             else:
                 data_links.append((category_name, link_name, url))
@@ -102,12 +102,12 @@ def download_dataset(
         if len(not_in_co3d) > 0:
             raise ValueError(
                 f"download_categories {str(not_in_co3d)} are not valid"
-                + "CO3D categories."
+                + "dataset categories."
             )
         data_links = [(c, ln, l) for c, ln, l in data_links if c in download_categories]
 
     with Pool(processes=n_download_workers) as download_pool:
-        print(f"Downloading {len(metadata_links)} CO3D metadata files ...")
+        print(f"Downloading {len(metadata_links)} dataset metadata files ...")
         for _ in tqdm(
             download_pool.imap(
                 functools.partial(_download_metadata_file, download_folder),
@@ -117,7 +117,7 @@ def download_dataset(
         ):
             pass
 
-        print(f"Downloading {len(data_links)} CO3D dataset files ...")
+        print(f"Downloading {len(data_links)} dataset files ...")
         download_ok = {}
         for link_name, ok in tqdm(
             download_pool.imap(
@@ -145,7 +145,7 @@ def download_dataset(
                 + " Please restart the download script."
             )
 
-    print(f"Extracting {len(data_links)} CO3D dataset files ...")
+    print(f"Extracting {len(data_links)} dataset files ...")
     with Pool(processes=n_extract_workers) as extract_pool:
         for _ in tqdm(
             extract_pool.imap(
@@ -170,7 +170,7 @@ def _unpack_category_file(
 ):
     category, link_name, url = link
     local_fl = os.path.join(download_folder, link_name)
-    print(f"Unpacking CO3D dataset file {local_fl} ({link_name}) to {download_folder}.")
+    print(f"Unpacking dataset file {local_fl} ({link_name}) to {download_folder}.")
     shutil.unpack_archive(local_fl, download_folder)
     if clear_archive:
         os.remove(local_fl)
@@ -195,7 +195,7 @@ def _download_category_file(
     os.makedirs(in_progress_folder, exist_ok=True)
     local_fl = os.path.join(in_progress_folder, link_name)
 
-    print(f"Downloading CO3D dataset file {link_name} ({url}) to {local_fl}.")
+    print(f"Downloading dataset file {link_name} ({url}) to {local_fl}.")
     _download_with_progress_bar(url, local_fl, link_name)
     if checksum_check:
         print(f"Checking SHA256 for {local_fl}.")
@@ -221,7 +221,7 @@ def _download_metadata_file(download_folder: str, link: str):
     local_fl = os.path.join(download_folder, link[0])
     # remove the singlesequence postfix in case we are downloading the s.s. subset
     local_fl = local_fl.replace("_singlesequence", "")
-    print(f"Downloading CO3D metadata file {link[1]} ({link[0]}) to {local_fl}.")
+    print(f"Downloading dataset metadata file {link[1]} ({link[0]}) to {local_fl}.")
     _download_with_progress_bar(link[1], local_fl, link[0])
 
 
