@@ -145,7 +145,8 @@ def download_dataset(
                 + " Please restart the download script."
             )
 
-    print(f"Extracting {len(data_links)} dataset files ...")
+    metadata_links = [ml for ml in metadata_links if ml[1].endswith(".zip")]
+    print(f"Extracting {len(data_links)} dataset files and {len(metadata_links)} metadata files...")
     with Pool(processes=n_extract_workers) as extract_pool:
         for _ in tqdm(
             extract_pool.imap(
@@ -154,9 +155,9 @@ def download_dataset(
                     download_folder,
                     clear_archives_after_unpacking,
                 ),
-                data_links,
+                metadata_links + data_links,
             ),
-            total=len(data_links),
+            total=len(metadata_links) + len(data_links),
         ):
             pass
 
@@ -168,7 +169,7 @@ def _unpack_category_file(
     clear_archive: bool,
     link: str,
 ):
-    category, link_name, url = link
+    *_, link_name, url = link
     local_fl = os.path.join(download_folder, link_name)
     print(f"Unpacking dataset file {local_fl} ({link_name}) to {download_folder}.")
     shutil.unpack_archive(local_fl, download_folder)
@@ -188,7 +189,7 @@ def _download_category_file(
     local_fl_final = os.path.join(download_folder, link_name)
 
     if skip_downloaded_files and os.path.isfile(local_fl_final):
-        print(f"Skippping {local_fl_final}, already downloaded!")
+        print(f"Skipping {local_fl_final}, already downloaded!")
         return link_name, True
 
     in_progress_folder = os.path.join(download_folder, "_in_progress")
