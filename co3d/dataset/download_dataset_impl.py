@@ -11,6 +11,8 @@ import requests
 import functools
 import json
 import warnings
+
+from argparse import ArgumentParser
 from typing import List, Optional
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -162,6 +164,85 @@ def download_dataset(
             pass
 
     print("Done")
+
+
+def build_arg_parser(
+    dataset_name: str,
+    default_link_list_file: str,
+    default_sha256_file: str,
+) -> ArgumentParser:
+    parser = ArgumentParser(description=f"Download the {dataset_name} dataset.")
+    parser.add_argument(
+        "--download_folder",
+        type=str,
+        required=True,
+        help="A local target folder for downloading the the dataset files.",
+    )
+    parser.add_argument(
+        "--n_download_workers",
+        type=int,
+        default=4,
+        help="The number of parallel workers for downloading the dataset files.",
+    )
+    parser.add_argument(
+        "--n_extract_workers",
+        type=int,
+        default=4,
+        help="The number of parallel workers for extracting the dataset files.",
+    )
+    parser.add_argument(
+        "--download_categories",
+        type=lambda x: [x_.strip() for x_ in x.split(",")],
+        default=None,
+        help=f"A comma-separated list of {dataset_name} categories to download."
+        + " Example: 'orange,car' will download only oranges and cars",
+    )
+    parser.add_argument(
+        "--link_list_file",
+        type=str,
+        default=default_link_list_file,
+        help=(
+            f"The file with html links to the {dataset_name} dataset files."
+            + " In most cases the default local file `links.json` should be used."
+        ),
+    )
+    parser.add_argument(
+        "--sha256_file",
+        type=str,
+        default=default_sha256_file,
+        help=(
+            f"The file with SHA256 hashes of {dataset_name} dataset files."
+            + " In most cases the default local file `co3d_sha256.json` should be used."
+        ),
+    )
+    parser.add_argument(
+        "--checksum_check",
+        action="store_true",
+        default=True,
+        help="Check the SHA256 checksum of each downloaded file before extraction.",
+    )
+    parser.add_argument(
+        "--no_checksum_check",
+        action="store_false",
+        dest="checksum_check",
+        default=False,
+        help="Does not check the SHA256 checksum of each downloaded file before extraction.",
+    )
+    parser.set_defaults(checksum_check=True)
+    parser.add_argument(
+        "--clear_archives_after_unpacking",
+        action="store_true",
+        default=False,
+        help="Delete the unnecessary downloaded archive files after unpacking.",
+    )
+    parser.add_argument(
+        "--redownload_existing_archives",
+        action="store_true",
+        default=False,
+        help="Redownload the already-downloaded archives.",
+    )
+
+    return parser
 
 
 def _unpack_category_file(
