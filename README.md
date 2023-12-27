@@ -21,7 +21,7 @@ The original dataset has been introduced in our ICCV'21 paper: [Common Objects i
 - 2x larger number of sequences, and 4x larger number of frames
 - Improved image quality - less blocky artifacts due to better video decoding
 - Improved segmentation masks - stable tracking of the main foreground object without jumping to background objects
-- Enabled downloading of a smaller single-sequence subset of ~100 sequences consisting only of the sequences used to evalute the many-view single-sequence task
+- Enabled downloading of a smaller single-sequence subset of ~100 sequences consisting only of the sequences used to evaluate the many-view single-sequence task
 - Dataset files are hosted in 20 GB chunks facilitating more stable downloads
 - A novel, more user-friendly, dataset format
 - All images within a sequence are cropped to the same height x width
@@ -61,7 +61,7 @@ python ./co3d/download_dataset.py --download_folder DOWNLOAD_FOLDER --single_seq
 <img src="./co3d/challenge/co3d_challenge_logo.png" width="400" />
 </center>
 Together with releasing v2 of the dataset, we also organize the Common Objects in 3D Challenge hosted on EvalAI.
-Please visit the [challenge website](https://eval.ai/web/challenges/challenge-page/1819/overview) and [challenge README](./co3d/challenge/README.md) for the more information.
+Please visit the [challenge website](https://eval.ai/web/challenges/challenge-page/1819/overview) and [challenge README](./co3d/challenge/README.md) for more information.
 
 
 # Installation
@@ -158,7 +158,7 @@ names `<category_j>`. Each category comprises sequence folders `<category_k>/<se
 Users specify the loaded dataset subset by setting `self.subset_name` to one of the
 available subset names `<subset_name_l>`.
 
-`frame_annotations.jgz` and `sequence_annotations.jgz` are gzipped json files containing the list of all frames and sequences of the given category stored as lists of `FrameAnnotation` and `SequenceAnnotation` objects respectivelly.
+`frame_annotations.jgz` and `sequence_annotations.jgz` are gzipped json files containing the list of all frames and sequences of the given category stored as lists of `FrameAnnotation` and `SequenceAnnotation` objects respectively.
 
 
 ## Set lists
@@ -182,7 +182,7 @@ Each `set_lists_<subset_name_l>.json` file contains the following dictionary:
 ```
 defining the list of frames (identified with their `sequence_name` and `frame_number`) in the "train", "val", and "test" subsets of the dataset.
 
-<i>Note that `frame_number` can be obtained only from `frame_annotations.jgz` and does not necesarrily correspond to the numeric suffix of the corresponding image file name (e.g. a file `<category_0>/<sequence_name_0>/images/frame00005.jpg` can have its frame number set to 20, not 5).</i>
+<i>Note that `frame_number` can be obtained only from `frame_annotations.jgz` and does not necessarily correspond to the numeric suffix of the corresponding image file name (e.g. a file `<category_0>/<sequence_name_0>/images/frame00005.jpg` can have its frame number set to 20, not 5).</i>
 
 
 ### Available subset names in CO3Dv2
@@ -215,7 +215,7 @@ Note that the evaluation examples always come from the `"test"` part of the corr
 
 <b>The evaluation task</b> then consists of generating the first image in each batch given the knowledge of the other ones. Hence, the first image in each batch represents the (unseen) target frame, for which only the camera parameters are known, while the rest of the images in the batch are the known source frames whose cameras and colors are given.
 
-Note that for the Many-view task, where a user is given many known views of a particular sequence and the goal is to generate held-out views from the same sequence, `eval_batches_manyview_<sequence_set>_<sequence_id>.json` contain a single (target) frame per evaluation batch. Users can obtain the known views from the corresponding `"train"` list of frames in the set list `set_lists_manyview_<sequence_set>_<sequence_id>.json`.
+Note that for the Many-view task, where a user is given many known views of a particular sequence and the goal is to generate held-out views from the same sequence, `eval_batches_manyview_<sequence_set>_<sequence_id>.json` contains a single (target) frame per evaluation batch. Users can obtain the known views from the corresponding `"train"` list of frames in the set list `set_lists_manyview_<sequence_set>_<sequence_id>.json`.
 
 
 # PyTorch-independent usage
