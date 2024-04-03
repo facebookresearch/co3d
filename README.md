@@ -251,7 +251,7 @@ If you use our dataset, please use the following citation:
 
 
 # License
-The CO3D codebase is released under the [CC BY 4.0](LICENSE).
+The CO3D codebase is released under the [CC BY-NC 4.0](LICENSE).
 
 
 # Overview video
