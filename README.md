@@ -28,7 +28,7 @@ The original dataset has been introduced in our ICCV'21 paper: [Common Objects i
 
 
 ## Download the dataset
-The links to all dataset files are present in this repository in `dataset/links.txt`.
+The links to all dataset files are present in this repository in `dataset/links.json`.
 
 
 ### Automatic batch-download
